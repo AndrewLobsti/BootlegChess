@@ -295,24 +295,27 @@ class Board:
                     n += 1
         return n
 
-    def saveListToFile(self, t):
+    def saveListToFile(self, t, m):
         if t == 0:
             l = self.team0Moves
-            fn = "team0Moves"
+            fn = m + "team0Moves"
             f = open(fn, "wb")
             pickle.dump(l, f)
             f.close()
         elif t == 1:
             l = self.team1Moves
-            fn = "team1Moves"
+            fn = m + "team1Moves"
             f = open(fn, "wb")
             pickle.dump(l, f)
             f.close()
 
     def spartanTrainingFacility(self):
         match = 0
-        while self.winningTeam == 2:
+        while match < 4:
+            self.winningTeam = 2
             self.boardConstructor()
+            self.team0Moves.clear()
+            self.team1Moves.clear()
             team = random.randint(0, 1)
             northstart = random.randint(0, 1)
             for r in self.board:
@@ -355,7 +358,6 @@ class Board:
                         if c == 5:
                             r.pop(c)
                             r.insert(c, King.King("k", team + 1 - 2 * team))
-                print(r)
             turns = 0
             pr = self.piecesOnBoard()
             while turns < 500 and pr > 2 and self.winningTeam == 2:
@@ -363,15 +365,16 @@ class Board:
                 self.drEggman(0)
                 turns += 1
                 pr = self.piecesOnBoard()
-            match += 1
-            print(match)
             self.displayBoard()
-        print("team " + str(self.winningTeam) + " won the match!")
-        self.displayBoard()
-        if str(self.winningTeam) == str(0):
-            self.saveListToFile(0)
-        else:
-            self.saveListToFile(1)
+            print("team " + str(self.winningTeam) + " won the match!")
+            if str(self.winningTeam) == str(0):
+                self.displayBoard()
+                self.saveListToFile(0, str(match))
+                match += 1
+            elif str(self.winningTeam) == str(1):
+                self.displayBoard()
+                self.saveListToFile(1, str(match))
+                match += 1
 
     def gameStart(self):
         print("CHESS MEGA")
