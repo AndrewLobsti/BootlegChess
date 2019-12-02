@@ -8,24 +8,18 @@ class Rook(Piece):
 
     # noinspection PyAttributeOutsideInit
     def validMove(self, board, cr, cc, nr, nc):
+        if nr == cr and nc == cc:
+            return False
         if board.validIndex(nr, nc):
             if nr != cr and nc != cc:
                 return False
             if nr != cr:
                 if int((abs(nr - cr) + (nr - cr)) / 2) != 0:
-                    nb = 0
+                    nb = 1
                     cb = 1
                 else:
-                    nb = 1
+                    nb = 0
                     cb = 0
-                if abs(nr - cr) == 1:
-                    if not str(board.square(nr, cc)).isspace():
-                        if board.square(nr, cc).team != self.team:
-                            return True
-                        else:
-                            return False
-                    else:
-                        return True
                 for r in range(nr - int((abs(nr-cr) + (nr-cr)) / 2) + nb, cr + int((abs(nr - cr) + (nr - cr)) / 2) + cb):
                     # this will cycle over the rows that are between where the piece is and where we want it to be.
                     # the math inside the range function will compute the number of lines (nr - cr) we add (cr +) or
@@ -40,50 +34,25 @@ class Rook(Piece):
                         if r != nr:
                             return False
                         else:
-                            if board.square(r, cc).team != self.team:
-                                return True
-                            else:
+                            if board.square(r, cc).team == self.team:
                                 return False
-
-                if not str(board.square(nr, cc)).isspace():
-                    if board.square(nr, cc).team != self.team:
-                        return True
-                    else:
-                        return False
-                else:
-                    return True
+                return True
             else:
                 if int((abs(nc - cc) + (nc - cc)) / 2) != 0:
-                    nb = 0
+                    nb = 1
                     cb = 1
                 else:
-                    nb = 1
+                    nb = 0
                     cb = 0
-                if abs(nc - cc) == 1:
-                    if not str(board.square(cr, nc)).isspace():
-                        if board.square(cr, nc).team != self.team:
-                            return True
-                        else:
-                            return False
-                    else:
-                        return True
                 for c in range(nc - int((abs(nc-cc) + (nc-cc)) / 2) + nb, cc + int((abs(nc - cc) + (nc - cc)) / 2) + cb):
                     # same as explained in the comment bloc above, but for lengthwise movement.
                     if not str(board.square(cr, c)).isspace():
                         if c != nc:
                             return False
                         else:
-                            if board.square(cr, c).team != self.team:
-                                return True
-                            else:
+                            if board.square(cr, c).team == self.team:
                                 return False
-                if not str(board.square(cr, nc)).isspace():
-                    if board.square(cr, nc).team != self.team:
-                        return True
-                    else:
-                        return False
-                else:
-                    return True
+                return True
         else:
             return False
 

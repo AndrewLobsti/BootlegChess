@@ -8,6 +8,8 @@ class King(Piece):
 
     # noinspection PyAttributeOutsideInit
     def validMove(self, board, cr, cc, nr, nc):
+        if nr == cr and nc == cc:
+            return False
         if board.validIndex(nr, nc):
             if abs(nc - cc) > 1 or abs(nr - cr) > 1:
                 return False

@@ -8,6 +8,8 @@ class Knight(Piece):
 
     # noinspection PyAttributeOutsideInit
     def validMove(self, board, cr, cc, nr, nc):
+        if nr == cr and nc == cc:
+            return False
         if board.validIndex(nr, nc):
             if cc == nc or cr == nr:
                 return False

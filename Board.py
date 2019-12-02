@@ -35,9 +35,16 @@ class Board:
 
             self.board.append(row)
 
-    def displayBoard(self):
-        for r in self.board:
-            print(r)
+    def displayBoard(self, team):
+        if team == 0:
+            for r in self.board:
+                print(r + self.team0Moves)
+        elif team == 1:
+            for r in self.board:
+                print(r + self.team1Moves)
+        else:
+            for r in self.board:
+                print(r + self.shadowRealm)
 
     def square(self, r, c):
         return self.board[r][c]
@@ -56,26 +63,16 @@ class Board:
                         availablePicks.append(i)
         return availablePicks
 
-    def squaresInRange(self, p, cr, cc, team):
-        inRange = []
-        for nr in range(1, 9):
-            for nc in range(1, 9):
-                if p.validMove(self, cr, cc, nr, nc):
-                    if self.teamInCheck != team:
-                        inRange.append(self.square(nr, nc))
-                    else:
-                        if not self.kingInCheck(team + 1 - 2 * team):
-                            inRange.append(self.square(nr, nc))
-        return inRange
-
-    def kingInCheck(self, team):
-        for r in range(1, 9):
-            for c in range(1, 9):
-                p = self.getPiece(r, c, team)
-                if str(p) != str(1):
-                    s = self.squaresInRange(p, r, c, team)
-                    for i in range(len(s)):
-                        if str(s[i]) == " k " or str(s[i]) == " K ":
+    def kingInCheck(self, team, future):
+        for i in self.availablePicks(team):
+            p = self.square(i[0], i[1])
+            for r in range(1, 9):
+                for c in range(1, 9):
+                    if p.validMove(self, i[0], i[1], r, c):
+                        if str(self.square(r, c)) == " k " or str(self.square(r, c)) == " K ":
+                            # if not future:
+                            # print(str(p) + " in " + str(i[0]) + "," + str(i[1]) + " has the enemy team in check!")
+                            # print(self.inRange(p, i[0], i[1], team))
                             return True
         return False
 
@@ -88,10 +85,10 @@ class Board:
                     self.board[r].pop(c)
                     self.board[r].insert(c, p)
                     self.board[cr][cc] = " "
-                    if not self.kingInCheck(team + 1 - 2 * team):
-                        self.teamInCheck = 2
+                    if not self.kingInCheck(team + 1 - 2 * team, True):
                         square = [r, c]
                         inRange.append(square)
+                        self.teamInCheck = 2
                     self.board[r].pop(c)
                     self.board[r].insert(c, s)
                     self.board[cr][cc] = p
@@ -122,6 +119,12 @@ class Board:
             self.board[nr].pop(nc)
             self.board[nr].insert(nc, cp)
             self.board[cr][cc] = " "
+        if self.kingInCheck(0, False):
+            self.teamInCheck = 1
+            # print("1 in check!")
+        elif self.kingInCheck(1, False):
+            self.teamInCheck = 0
+            # print("0 in check!")
 
     def promotePawn(self, r, c, team, AI):
         while True:
@@ -155,6 +158,14 @@ class Board:
                 self.board[r].insert(c, Bishop.Bishop(p, team))
                 break
 
+    def addtoMovementList(self, y, np, p, t):
+        if t == 0:
+            move = str(p) + ", " + str(y[0]) + ", " + str(y[1]) + ", " + str(np[0]) + ", " + str(np[1])
+            self.team0Moves.append(move)
+        else:
+            move = str(p) + ", " + str(y[0]) + ", " + str(y[1]) + ", " + str(np[0]) + ", " + str(np[1])
+            self.team1Moves.append(move)
+
     def drEggman(self, team):
         cM = 0
         t = team + 1 - 2 * team
@@ -181,44 +192,15 @@ class Board:
                 else:
                     np = self.inRange(p, y[0], y[1], t)[0]
                 if str(p) == " p " or str(p) == " P ":
-                    if not str(self.square(np[0], np[1])).isspace():
-                        if str(self.square(np[0], np[1])) == " k " or str(self.square(np[0], np[1])) == " K ":
-                            self.teamInCheck = team
-                            if t == 0:
-                                move = str(p) + ", " + str(y[0]) + ", " + str(y[1]) + ", " + str(np[0]) + ", " + str(np[1])
-                                self.team0Moves.append(move)
-                                break
-                            else:
-                                move = str(p) + ", " + str(y[0]) + ", " + str(y[1]) + ", " + str(np[0]) + ", " + str(np[1])
-                                self.team1Moves.append(move)
-                                break
+                    p.neverMoved = False
+                    self.movePiece(y[0], y[1], np[0], np[1])
                     if p.promotionRow == np[0]:
-                        self.movePiece(y[0], y[1], np[0], np[1])
                         self.promotePawn(np[0], np[1], t, 1)
-                        break
-                    else:
-                        self.movePiece(y[0], y[1], np[0], np[1])
-                        break
-                if not str(self.square(np[0], np[1])).isspace():
-                    if str(self.square(np[0], np[1])) == " k " or str(self.square(np[0], np[1])) == " K ":
-                        self.teamInCheck = team
-                        if t == 0:
-                            move = str(p) + ", " + str(y[0]) + ", " + str(y[1]) + ", " + str(np[0]) + ", " + str(np[1])
-                            self.team0Moves.append(move)
-                            break
-                        else:
-                            move = str(p) + ", " + str(y[0]) + ", " + str(y[1]) + ", " + str(np[0]) + ", " + str(np[1])
-                            self.team1Moves.append(move)
-                            break
+                    self.addtoMovementList(y, np, p, t)
+                    break
                 self.movePiece(y[0], y[1], np[0], np[1])
-                if t == 0:
-                    move = str(p) + ", " + str(y[0]) + ", " + str(y[1]) + ", " + str(np[0]) + ", " + str(np[1])
-                    self.team0Moves.append(move)
-                    break
-                else:
-                    move = str(p) + ", " + str(y[0]) + ", " + str(y[1]) + ", " + str(np[0]) + ", " + str(np[1])
-                    self.team1Moves.append(move)
-                    break
+                self.addtoMovementList(y, np, p, t)
+                break
             else:
                 cM = 1
         if cM == 1:
@@ -310,8 +292,8 @@ class Board:
             f.close()
 
     def spartanTrainingFacility(self):
-        match = 0
-        while match < 4:
+        match = 300
+        while match < 600:
             self.winningTeam = 2
             self.boardConstructor()
             self.team0Moves.clear()
@@ -360,21 +342,58 @@ class Board:
                             r.insert(c, King.King("k", team + 1 - 2 * team))
             turns = 0
             pr = self.piecesOnBoard()
-            while turns < 500 and pr > 2 and self.winningTeam == 2:
+            while turns < 500 and pr > 3 and self.winningTeam == 2:
                 self.drEggman(1)
+                # print(self.team0Moves)
+                # self.displayBoard(0)
+                turns += 1
                 self.drEggman(0)
+                # print(self.team1Moves)
+                # self.displayBoard(1)
                 turns += 1
                 pr = self.piecesOnBoard()
-            self.displayBoard()
-            print("team " + str(self.winningTeam) + " won the match!")
             if str(self.winningTeam) == str(0):
-                self.displayBoard()
-                self.saveListToFile(0, str(match))
+                print("team " + str(self.winningTeam) + " won the match in " + str(turns) + " moves")
+                self.kingInCheck(0, False)
+                self.displayBoard(self.winningTeam)
+                # self.saveListToFile(0, str(match))
                 match += 1
             elif str(self.winningTeam) == str(1):
-                self.displayBoard()
-                self.saveListToFile(1, str(match))
+                print("team " + str(self.winningTeam) + " won the match in " + str(turns) + " moves")
+                self.kingInCheck(1, False)
+                self.displayBoard(self.winningTeam)
+                # self.saveListToFile(1, str(match))
                 match += 1
+            else:
+                print("draw in " + str(turns) + " moves")
+                self.displayBoard(self.winningTeam)
+
+    def trainingStats(self):
+        lowerWins = 0
+        upperWins = 0
+        lttw = 0
+        uttw = 0
+        tttw = 0
+        for m in range(300):
+            try:
+                fn = str(m) + "team0Moves"
+                fr = open(fn, "rb")
+                l = pickle.load(fr)
+                print(l)
+                fr.close()
+                lttw += len(l)
+                tttw += len(l)
+                lowerWins += 1
+            except FileNotFoundError:
+                fn = str(m) + "team1Moves"
+                fr = open(fn, "rb")
+                l = pickle.load(fr)
+                print(l)
+                fr.close()
+                uttw += len(l)
+                tttw += len(l)
+                upperWins += 1
+        print(str(lowerWins) + "," + str(upperWins) + "," + str(lttw / lowerWins) + "," + str(uttw / upperWins) + "," + str(tttw / 300))
 
     def gameStart(self):
         print("CHESS MEGA")
@@ -484,7 +503,6 @@ class Board:
                     self.drEggman(0)
                     turns += 1
                 print(match)
-                self.displayBoard()
             print("team " + str(self.winningTeam) + " won the match!")
             if str(self.winningTeam) == 0:
                 print(self.team0Moves)
@@ -495,3 +513,4 @@ class Board:
 b = Board()
 b.boardConstructor()
 b.spartanTrainingFacility()
+# b.trainingStats()

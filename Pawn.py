@@ -14,6 +14,8 @@ class Pawn(Piece):
     # noinspection PyAttributeOutsideInit
     def validMove(self, board, cr, cc, nr, nc):
         if board.validIndex(nr, nc):
+            if nr == cr and nc == cc:
+                return False
             maxRange = 1
             if nc != cc:
                 if nr == cr:
@@ -29,13 +31,14 @@ class Pawn(Piece):
                 else:
                     if not str(board.square(nr, nc)).isspace():
                         if board.square(nr, nc).team != self.team:
-                            self.neverMoved = False
                             return True
                         else:
                             return False
                     else:
                         return False
             else:
+                if nr == cr:
+                    return False
                 if self.ds == 0:
                     if nr > cr:
                         return False
@@ -55,13 +58,6 @@ class Pawn(Piece):
                 for r in range(nr - int((abs(nr - cr) + (nr - cr)) / 2) + nb, cr + int((abs(nr - cr) + (nr - cr)) / 2) + cb):
                     if not str(board.square(r, cc)).isspace():
                         return False
-                self.neverMoved = False
-                if not str(board.square(nr, cc)).isspace():
-                    if board.square(nr, nc).team != self.team:
-                        return True
-                    else:
-                        return False
-                else:
-                    return True
+                return True
         else:
             return False
