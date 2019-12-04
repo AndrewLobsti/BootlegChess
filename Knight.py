@@ -4,7 +4,7 @@ from Piece import Piece
 class Knight(Piece):
 
     def __init__(self, ID, team):
-        super().__init__(ID, team)
+        super().__init__(ID, team, 3)
 
     # noinspection PyAttributeOutsideInit
     def validMove(self, board, cr, cc, nr, nc):

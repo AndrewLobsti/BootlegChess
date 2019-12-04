@@ -4,7 +4,7 @@ from Piece import Piece
 class Pawn(Piece):
 
     def __init__(self, ID, team, startingRow):
-        super().__init__(ID, team)
+        super().__init__(ID, team, 1)
         self.startingRow = startingRow
         self.ds = 1
         if startingRow == 7:
@@ -34,8 +34,10 @@ class Pawn(Piece):
                             return True
                         else:
                             return False
-                    else:
-                        return False
+                    elif str(board.square(cr, nc)).isspace() is False and board.square(cr, nc).type == "p" and board.square(cr, nc).team != self.team:  # En passant attack code
+                        if abs(cr - board.square(cr, nc).startingRow) == 2 and board.square(cr, nc).moves == 1:
+                            return True
+                return False
             else:
                 if nr == cr:
                     return False
