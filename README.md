@@ -1,1 +1,1 @@
-This is a chess engine im currently working on. Currently missing castling, en passant, and the computer playing something other than random moves. 
+This is a chess engine im currently working on. All legal moves are included. AI very rudimentary, has at most one turn of foresight.
