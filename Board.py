@@ -65,8 +65,8 @@ class Board:
                     if p.validMove(self, i[0], i[1], r, c):
                         if str(self.square(r, c)) == " k " or str(self.square(r, c)) == " K ":
                             # if not future:
-                            # print(str(p) + " in " + str(i[0]) + "," + str(i[1]) + " has the enemy team in check!")
-                            # print(self.inRange(p, i[0], i[1], team))
+                                # print(str(p) + " in " + str(i[0]) + "," + str(i[1]) + " has the enemy team in check!")
+                                # print(self.inRange(p, i[0], i[1], team))
                             return True
         return False
 
@@ -247,7 +247,6 @@ class Board:
         return bestPlay
 
     def GLadOS(self, team):
-        cM = 0
         t = team + 1 - 2 * team
         self.Castled = False
         possibleMovements = []
@@ -257,6 +256,10 @@ class Board:
             y = a[x]
             p = self.getPiece(y[0], y[1], t)
             e = self.inRange(p, y[0], y[1], t)
+            if p.type == "q":
+                print(p)
+                print(e)
+                self.displayBoard()
             if len(e) > 0:
                 possibleMovements.append(y)
         length = len(possibleMovements)
@@ -279,59 +282,60 @@ class Board:
                         self.movePiece(cr, cc - 4, nr, nc + 1)
                     else:
                         self.movePiece(cr, cc + 3, nr, nc - 1)
+                else:
+                    self.movePiece(cr, cc, nr, nc)
             else:
                 self.movePiece(cr, cc, nr, nc)
         else:
-            cM = 1
-        if cM == 1:
             self.winningTeam = team
 
     def Wheatley(self, team):
-        cM = 0
         t = team + 1 - 2 * team
         self.Castled = False
-        while cM == 0:
-            possibleMovements = []
-            a = self.availablePicks(t)
-            s = len(a)
-            for x in range(s):
-                y = a[x]
-                p = self.getPiece(y[0], y[1], t)
-                e = self.inRange(p, y[0], y[1], t)
-                if len(e) > 0:
-                    possibleMovements.append(y)
-            length = len(possibleMovements)
-            if length > 0:
-                if length - 1 > 0:
-                    y = possibleMovements[random.randint(0, length - 1)]
+        possibleMovements = []
+        a = self.availablePicks(t)
+        s = len(a)
+        for x in range(s):
+            y = a[x]
+            p = self.getPiece(y[0], y[1], t)
+            e = self.inRange(p, y[0], y[1], t)
+            if p.type == "q":
+                print(p)
+                print(e)
+                self.displayBoard()
+            if len(e) > 0:
+                possibleMovements.append(y)
+        length = len(possibleMovements)
+        if length > 0:
+            if length - 1 > 0:
+                y = possibleMovements[random.randint(0, length - 1)]
+            else:
+                y = possibleMovements[0]
+            p = self.getPiece(y[0], y[1], t)
+            length = len(self.inRange(p, y[0], y[1], t))
+            if length - 1 > 0:
+                np = self.inRange(p, y[0], y[1], t)[random.randint(0, length - 1)]
+            else:
+                np = self.inRange(p, y[0], y[1], t)[0]
+            if str(p) == " p " or str(p) == " P ":
+                self.movePiece(y[0], y[1], np[0], np[1])
+                if p.promotionRow == np[0]:
+                    self.promotePawn(np[0], np[1], t, 1)
+                self.addtoMovementList(y, np, p, t)
+            elif str(p) == " k " or str(p) == " K ":
+                if abs(np[1] - y[1]) > 1:
+                    print("Castling!")
+                    self.Castled = True
+                    if np[1] - y[1] < 0:
+                        self.movePiece(y[0], y[1] - 4, np[0], np[1] + 1)
+                    else:
+                        self.movePiece(y[0], y[1] + 3, np[0], np[1] - 1)
                 else:
-                    y = possibleMovements[0]
-                p = self.getPiece(y[0], y[1], t)
-                length = len(self.inRange(p, y[0], y[1], t))
-                if length - 1 > 0:
-                    np = self.inRange(p, y[0], y[1], t)[random.randint(0, length - 1)]
-                else:
-                    np = self.inRange(p, y[0], y[1], t)[0]
-                if str(p) == " p " or str(p) == " P ":
                     self.movePiece(y[0], y[1], np[0], np[1])
-                    if p.promotionRow == np[0]:
-                        self.promotePawn(np[0], np[1], t, 1)
-                    self.addtoMovementList(y, np, p, t)
-                    break
-                if str(p) == " k " or str(p) == " K ":
-                    if abs(np[1] - y[1]) > 1:
-                        print("Castling!")
-                        self.Castled = True
-                        if np[1] - y[1] < 0:
-                            self.movePiece(y[0], y[1] - 4, np[0], np[1] + 1)
-                        else:
-                            self.movePiece(y[0], y[1] + 3, np[0], np[1] - 1)
+            else:
                 self.movePiece(y[0], y[1], np[0], np[1])
                 self.addtoMovementList(y, np, p, t)
-                break
-            else:
-                cM = 1
-        if cM == 1:
+        else:
             self.winningTeam = team
 
     def playerTurn(self, team):
@@ -426,6 +430,7 @@ class Board:
             self.boardConstructor()
             self.team0Moves.clear()
             self.team1Moves.clear()
+            self.shadowRealm.clear()
             team = random.randint(0, 1)
             northstart = random.randint(0, 1)
             for r in self.board:
@@ -471,11 +476,13 @@ class Board:
             turns = 0
             pr = self.piecesOnBoard()
             while turns < 500 and pr > 3 and self.winningTeam == 2:
-                self.Wheatley(1)
+                if self.winningTeam == 2:
+                    self.Wheatley(1)
                 # print(self.team0Moves)
                 # self.displayBoard()
                 turns += 1
-                self.GLadOS(0)
+                if self.winningTeam == 2:
+                    self.GLadOS(0)
                 # print(self.team1Moves)
                 # self.displayBoard()
                 turns += 1
@@ -483,18 +490,21 @@ class Board:
             if str(self.winningTeam) == str(0):
                 print("team " + str(self.winningTeam) + " won the match in " + str(turns) + " moves")
                 # self.kingInCheck(0, False)
-                # self.displayBoard()
+                print(self.shadowRealm)
+                self.displayBoard()
                 # self.saveListToFile(0, str(match))
                 match += 1
             elif str(self.winningTeam) == str(1):
                 print("team " + str(self.winningTeam) + " won the match in " + str(turns) + " moves")
                 # self.kingInCheck(1, False)
-                # self.displayBoard()
+                print(self.shadowRealm)
+                self.displayBoard()
                 # self.saveListToFile(1, str(match))
                 match += 1
             else:
                 print("draw in " + str(turns) + " moves")
-                # self.displayBoard()
+                print(self.shadowRealm)
+                self.displayBoard()
 
     def trainingStats(self):
         lowerWins = 0

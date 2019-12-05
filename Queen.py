@@ -20,23 +20,19 @@ class Queen(Piece):
                     nb = 1
                 else:
                     nb = 0
-                if int((abs(nc - cc) + (nc - cc)) / 2) != 0:
-                    cb = 1
-                else:
-                    cb = 0
-                rowScanStart = nr - int((abs(nr - cr) + (nr - cr)) / 2) + nb
+                rowScanStart = nr - int((abs(nr - cr) + (nr - cr)) / 2)
                 rowScanEnd = cr + int((abs(nr - cr) + (nr - cr)) / 2) + nb
-                columnScanStart = nc - int((abs(nc - cc) + (nc - cc)) / 2) + cb
-                columnScanEnd = cc + int((abs(nc - cc) + (nc - cc)) / 2) + cb
                 for r in range(rowScanStart, rowScanEnd):
-                    for c in range(columnScanStart, columnScanEnd):
-                        if abs(c - columnScanStart) == abs(r - rowScanStart):
-                            if not str(board.square(r, c)).isspace():
-                                if board.square(r, c).team == self.team:
+                    # for c in range(columnScanStart, columnScanEnd):
+                    c = int(cc + ((nc - cc) / abs(nc - cc)) * abs(r - cr))
+                    # if abs(c - columnScanStart) == abs(r - rowScanStart):
+                    if c != cc and c != nc:
+                        if not str(board.square(r, c)).isspace():
+                            if board.square(r, c).team == self.team:
+                                return False
+                            else:
+                                if r != nr or c != nc:
                                     return False
-                                else:
-                                    if r != nr or c != nc:
-                                        return False
                 return True
             else:
                 if nr != cr and nc == cc:
@@ -69,5 +65,7 @@ class Queen(Piece):
                                 if board.square(cr, c).team == self.team:
                                     return False
                     return True
+                else:
+                    return False
         else:
             return False
