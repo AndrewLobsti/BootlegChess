@@ -43,6 +43,11 @@ class Board:
     def square(self, r, c):
         return self.board[r][c]
 
+    def boardReplace(self, p, o, cr, cc, nr, nc):
+        self.board[nr].pop(nc)
+        self.board[nr].insert(nc, p)
+        self.board[cr][cc] = o
+
     def validIndex(self, r, c):
         return 9 > r > 0 and 9 > c > 0
 
@@ -70,10 +75,21 @@ class Board:
                             return True
         return False
 
-    def inAttackRange(self, r, c, team):
+    def inAttackRange(self, team):
+        positions = []
         for i in self.availablePicks(team):
-            p = self.square(i[0], i[1])
-            if p.validMove(self, i[0], i[1], r, c):
+            ap = self.getPiece(i[0], i[1], team)
+            l = self.inRange(ap, i[0], i[1], team)
+            for x in l:
+                positions.append(x)
+        return positions
+
+    def isAttackable(self, r, c, team):
+        p = [r, c]
+        for i in self.availablePicks(team):
+            ap = self.getPiece(i[0], i[1], team)
+            l = self.inRange(ap, i[0], i[1], team)
+            if l.count(p) > 0:
                 return True
         return False
 
@@ -97,29 +113,33 @@ class Board:
                             if self.kingInCheck(team + 1 - 2 * team, False):
                                 append = False
                             s = self.square(r, nc)
-                            self.board[r].pop(nc)
-                            self.board[r].insert(nc, p)
-                            self.board[cr][cc] = " "
+                            # self.board[r].pop(nc)
+                            # self.board[r].insert(nc, p)
+                            # self.board[cr][cc] = " "
+                            self.boardReplace(p, " ", cr, cc, r, nc)
                             if self.kingInCheck(team + 1 - 2 * team, True):
                                 append = False
-                            self.board[r].pop(nc)
-                            self.board[r].insert(nc, s)
-                            self.board[cr][cc] = p
+                            # self.board[r].pop(nc)
+                            # self.board[r].insert(nc, s)
+                            # self.board[cr][cc] = p
+                            self.boardReplace(s, p, cr, cc, r, nc)
                             if(c - cc) < 0:
                                 nc = c + 1
                             else:
                                 nc = c - 1
                     s = self.square(r, nc)
-                    self.board[r].pop(nc)
-                    self.board[r].insert(nc, p)
-                    self.board[cr][cc] = " "
+                    # self.board[r].pop(nc)
+                    # self.board[r].insert(nc, p)
+                    # self.board[cr][cc] = " "
+                    self.boardReplace(p, " ", cr, cc, r, nc)
                     if not self.kingInCheck(team + 1 - 2 * team, True):
                         if append:
                             square = [r, c]
                             inRange.append(square)
-                    self.board[r].pop(nc)
-                    self.board[r].insert(nc, s)
-                    self.board[cr][cc] = p
+                    # self.board[r].pop(nc)
+                    # self.board[r].insert(nc, s)
+                    # self.board[cr][cc] = p
+                    self.boardReplace(s, p, cr, cc, r, nc)
         return inRange
 
     def getPiece(self, r, c, team):
@@ -142,22 +162,25 @@ class Board:
             # print(str(cp) + " just ate " + str(np) + " !")
             self.shadowRealm.append(np)
             # print(self.shadowRealm)
-            self.board[nr].pop(nc)
-            self.board[nr].insert(nc, cp)
-            self.board[cr][cc] = " "
+            # self.board[nr].pop(nc)
+            # self.board[nr].insert(nc, cp)
+            # self.board[cr][cc] = " "
+            self.boardReplace(cp, " ", cr, cc, nr, nc)
         elif cp.type == "p" and nc != cc:
             pp = self.square(cr, nc)
             # print(str(cp) + " just ate " + str(pp) + " !")
             self.shadowRealm.append(pp)
             # print(self.shadowRealm)
-            self.board[nr].pop(nc)
-            self.board[nr].insert(nc, cp)
+            # self.board[nr].pop(nc)
+            # self.board[nr].insert(nc, cp)
+            # self.board[cr][cc] = " "
+            self.boardReplace(cp, " ", cr, cc, nr, nc)
             self.board[cr][nc] = " "
-            self.board[cr][cc] = " "
         else:
-            self.board[nr].pop(nc)
-            self.board[nr].insert(nc, cp)
-            self.board[cr][cc] = " "
+            # self.board[nr].pop(nc)
+            # self.board[nr].insert(nc, cp)
+            # self.board[cr][cc] = " "
+            self.boardReplace(cp, " ", cr, cc, nr, nc)
         self.teamInCheck = 2
         if self.kingInCheck(0, False):
             self.teamInCheck = 1
@@ -214,29 +237,47 @@ class Board:
     # noinspection PyUnusedLocal
     def chooseMove(self, possibleMoves, team):
         bestPlay = [None, 0, 0, 0, 0]
-        playValue = 0
-        bestValue = playValue
+        playValue = 0.0
+        bestValue = 0.0
+        piecesInDanger = self.inAttackRange(team + 1 - 2 * team)
+        for x in self.availablePicks(team):
+            y = self.getPiece(x[0], x[1], team)
+            if piecesInDanger.count(x) > 0:
+                bestValue -= y.value
+        piecesInDanger = self.inAttackRange(team + 1 - 2 * team)
         for i in possibleMoves:
+            playValue = 0.0
             p = self.getPiece(i[0], i[1], team)
             movementChoices = self.inRange(p, i[0], i[1], team)
             for m in movementChoices:
+                playValue = 0.0
+                s = self.square(m[0], m[1])
+                self.boardReplace(p, " ", i[0], i[1], m[0], m[1])
+                willBeInDanger = self.isAttackable(m[0], m[1], team + 1 - 2 * team)
+                piecesThatWillBeInDanger = self.inAttackRange(team + 1 - 2 * team)
+                piecesThatWillBeAttackable = self.inAttackRange(team)
+                for x in self.availablePicks(team):
+                    y = self.getPiece(x[0], x[1], team)
+                    if piecesThatWillBeInDanger.count(x) > 0:
+                        playValue -= y.value
+                for x in piecesThatWillBeAttackable:
+                    y = self.getPiece(x[0], x[1], team + 1 - 2 * team)
+                    if y != 1 and willBeInDanger is False:
+                        playValue += y.value * 0.05
+                self.boardReplace(s, p, i[0], i[1], m[0], m[1])
+                inDanger = self.isAttackable(i[0], i[1], team + 1 - 2 * team)
                 if p.type == "p":
-                    if p.promotionRow == m[0]:
-                        playValue = 9  # worth of a Queen
+                    if p.promotionRow == m[0] and willBeInDanger is False:
+                        playValue += 9.0  # worth of a Queen
                 if not str(self.square(m[0], m[1])).isspace():
                     ep = self.square(m[0], m[1])
-                    if self.inAttackRange(m[0], m[1], team + 1 - 2 * team):
-                        playValue = ep.value - p.value
-                    else:
-                        playValue += ep.value
-                elif not self.inAttackRange(m[0], m[1], team + 1 - 2 * team):
-                    playValue = 0
-                else:
-                    playValue = -p.value
-                if self.inAttackRange(i[0], i[1], team + 1 - 2 * team):
+                    playValue += ep.value
+                    if inDanger:
+                        playValue += p.value
+                elif inDanger:
                     playValue += p.value
-                if self.inCheckRange(p, m[0], m[1], team) and self.inAttackRange(m[0], m[1], team + 1 - 2 * team) is False:
-                    playValue += 2
+                if self.inCheckRange(p, m[0], m[1], team) and willBeInDanger is False:
+                    playValue += 2.0
                 if playValue >= bestValue:
                     bestValue = playValue
                     bestPlay[0] = p
@@ -244,6 +285,9 @@ class Board:
                     bestPlay[2] = i[1]
                     bestPlay[3] = m[0]
                     bestPlay[4] = m[1]
+        print(playValue)
+        print(bestValue)
+        print(bestPlay)
         return bestPlay
 
     def GLadOS(self, team):
@@ -256,10 +300,6 @@ class Board:
             y = a[x]
             p = self.getPiece(y[0], y[1], t)
             e = self.inRange(p, y[0], y[1], t)
-            if p.type == "q":
-                print(p)
-                print(e)
-                self.displayBoard()
             if len(e) > 0:
                 possibleMovements.append(y)
         length = len(possibleMovements)
@@ -299,10 +339,6 @@ class Board:
             y = a[x]
             p = self.getPiece(y[0], y[1], t)
             e = self.inRange(p, y[0], y[1], t)
-            if p.type == "q":
-                print(p)
-                print(e)
-                self.displayBoard()
             if len(e) > 0:
                 possibleMovements.append(y)
         length = len(possibleMovements)
@@ -350,28 +386,29 @@ class Board:
             if self.teamInCheck == team:
                 print(
                     "You are in check! you must get your king out of harms way! If you cannot do so in 5 tries, you will automatically lose the game!")
+                t = 0
                 for t in range(6):
                     if self.validIndex(r, c):
-                        k = self.getPiece(r, c, team)
-                        if str(k) != str(1):
+                        p = self.getPiece(r, c, team)
+                        if str(p) != str(1):
+                            inRange = self.inRange(p, r, c, team)
                             nr = int(input())
                             nc = int(input())
+                            cp = [nr, nc]
                             if nc != c or nr != r:
-                                if k.validMove(self, r, c, nr, nc):
+                                if inRange.count(cp) > 0:
                                     self.movePiece(r, c, nr, nc)
-                                    self.teamInCheck = 2
-                                    if str(self.squaresInRange(k, nr, nc, t)).find("k") != -1 or str(
-                                            self.squaresInRange(k, nr, nc, t)).find("K") != -1:
-                                        self.teamInCheck = team + 1 - 2 * team
-                                    self.displayBoard()
                                     break
                                 else:
                                     print("you utter buffoon you just blew one of your tries! " + str(
                                         6 - t) + " tries remain!")
-                self.winningTeam = team + 1 - 2 * team
+                if t == 5:
+                    self.winningTeam = team + 1 - 2 * team
+                break
             if self.validIndex(r, c):
                 p = self.getPiece(r, c, team)
                 if str(p) != str(1):
+                    inRange = self.inRange(p, r, c, team)
                     print("you selected the " + str(p) + " in row " + str(r) + " and column" + str(c))
                     print("if you wish to move this piece, input 1. Otherwise, input 0 to select another one. "
                           "Failure to comply with this simple instruction will not only mean you are dumb, "
@@ -384,18 +421,17 @@ class Board:
                               "located.")
                         nr = int(input())
                         nc = int(input())
+                        cp = [nr, nc]
                         if nc != c or nr != r:
-                            if p.validMove(self, r, c, nr, nc):
+                            if inRange.count(cp) > 0:
                                 if str(p) == "p" or str(p) == "P":
                                     if p.promotionRow == nr:
                                         print(
                                             "Your pawn reached the promotion row, as such you must now promote it! type the symbol of a piece of your choice (except pawns or kings) to replace the pawn with it")
+                                        self.movePiece(r, c, nr, nc)
                                         self.promotePawn(nr, nc, team, 0)
+                                        break
                                 self.movePiece(r, c, nr, nc)
-                                if str(self.squaresInRange(p, nr, nc, team)).find("k") != -1 or str(
-                                        self.squaresInRange(p, nr, nc, team)).find("K") != -1:
-                                    self.teamInCheck = team + 1 - 2 * team
-                                self.displayBoard()
                                 break
                             else:
                                 print(
@@ -478,13 +514,13 @@ class Board:
             while turns < 500 and pr > 3 and self.winningTeam == 2:
                 if self.winningTeam == 2:
                     self.Wheatley(1)
-                # print(self.team0Moves)
-                # self.displayBoard()
+                    # print(self.team0Moves)
+                    # self.displayBoard()
                 turns += 1
                 if self.winningTeam == 2:
                     self.GLadOS(0)
-                # print(self.team1Moves)
-                # self.displayBoard()
+                    # print(self.team1Moves)
+                    # self.displayBoard()
                 turns += 1
                 pr = self.piecesOnBoard()
             if str(self.winningTeam) == str(0):
@@ -600,9 +636,9 @@ class Board:
             print(r)
         while True:
             print(
-                "setup complete! now select number of players: 1 for vs AI, 2 for local multiplayer and 3 for AI vs AI")
+                "setup complete! now select number of players: 1 for vs AI, and 2 for local multiplayer")
             np = int(input())
-            if not 4 > np > 0:
+            if not 3 > np > 0:
                 print("incorrect number inputed. Please input a correct number. The correct number to input is "
                       "one that is not incorrect")
             else:
@@ -610,45 +646,39 @@ class Board:
         if np == 2:
             print("Game Start! this is a multiplayer match, so each player takes turn moving their pieces.")
             while self.winningTeam == 2:
-                self.playerTurn(0)
-                self.playerTurn(1)
+                if self.winningTeam == 2:
+                    self.playerTurn(0)
+                    self.displayBoard()
+                if self.winningTeam == 2:
+                    self.playerTurn(1)
+                    self.displayBoard()
             print("team " + str(self.winningTeam) + " won the match!")
         elif np == 1:
             print(
                 "Game Start! this is a vs AI match, so just input your move and then wait for your opponent, Dr Eggman, to input his!")
             while self.winningTeam == 2:
                 if team == 0:
-                    self.playerTurn(team)
-                else:
+                    if self.winningTeam == 2:
+                        self.playerTurn(team)
+                        self.displayBoard()
+                elif self.winningTeam == 2:
                     print(
                         "Dr Eggman is the Lowercase pieces player, please wait for his eggxcelency to input his move!")
-                    self.Wheatley(team)
+                    self.GLadOS(team)
+                    self.displayBoard()
                 if team == 1:
-                    self.playerTurn(team)
-                else:
+                    if self.winningTeam == 2:
+                        self.playerTurn(team)
+                        self.displayBoard()
+                elif self.winningTeam == 2:
                     print(
                         "Dr Eggman is the Uppercase pieces player, please wait for his eggxcelency to input his move!")
-                    self.Wheatley(team)
+                    self.GLadOS(team)
+                    self.displayBoard()
             print("team " + str(self.winningTeam) + " won the match!")
-        elif np == 3:
-            print("Game Start! this is an AI vs AI match, so just sit back and enjoy the shitshow!")
-            match = 0
-            while self.winningTeam == 2:
-                turns = 0
-                match += 1
-                while turns < 500:
-                    self.Wheatley(1)
-                    self.Wheatley(0)
-                    turns += 1
-                print(match)
-            print("team " + str(self.winningTeam) + " won the match!")
-            if str(self.winningTeam) == 0:
-                print(self.team0Moves)
-            else:
-                print(self.team1Moves)
 
 
 b = Board()
 b.boardConstructor()
-b.spartanTrainingFacility()
+b.gameStart()
 # b.trainingStats()

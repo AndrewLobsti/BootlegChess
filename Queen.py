@@ -4,7 +4,7 @@ from Piece import Piece
 class Queen(Piece):
 
     def __init__(self, ID, team):
-        super().__init__(ID, team, 9)
+        super().__init__(ID, team, 9.0)
 
     # noinspection PyAttributeOutsideInit
     def validMove(self, board, cr, cc, nr, nc):

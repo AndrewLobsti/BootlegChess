@@ -4,7 +4,7 @@ from Piece import Piece
 class Pawn(Piece):
 
     def __init__(self, ID, team, startingRow):
-        super().__init__(ID, team, 1)
+        super().__init__(ID, team, 1.0)
         self.startingRow = startingRow
         self.ds = 1
         if startingRow == 7:
