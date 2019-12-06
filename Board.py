@@ -378,64 +378,47 @@ class Board:
         player = "Lowercase"
         if team == 1:
             player = "Uppercase"
-        while True:
-            print(
-                player + " pieces player, choose the row and column where the piece you wish to move is located! (both values must be >= 1 and <= 8")
-            r = int(input())
-            c = int(input())
-            if self.teamInCheck == team:
-                print(
-                    "You are in check! you must get your king out of harms way! If you cannot do so in 5 tries, you will automatically lose the game!")
-                t = 0
-                for t in range(6):
-                    if self.validIndex(r, c):
-                        p = self.getPiece(r, c, team)
-                        if str(p) != str(1):
-                            inRange = self.inRange(p, r, c, team)
-                            nr = int(input())
-                            nc = int(input())
-                            cp = [nr, nc]
-                            if nc != c or nr != r:
-                                if inRange.count(cp) > 0:
-                                    self.movePiece(r, c, nr, nc)
-                                    break
-                                else:
-                                    print("you utter buffoon you just blew one of your tries! " + str(
-                                        6 - t) + " tries remain!")
-                if t == 5:
-                    self.winningTeam = team + 1 - 2 * team
-                break
-            if self.validIndex(r, c):
-                p = self.getPiece(r, c, team)
-                if str(p) != str(1):
+        possiblePicks = []
+        for x in self.availablePicks(team):
+            p = self.getPiece(x[0], x[1], team)
+            possibleMoves = self.inRange(p, x[0], x[1], team)
+            if len(possibleMoves) > 0:
+                possiblePicks.append(p)
+        if len(possiblePicks) > 0:
+            while True:
+                print(player + " pieces player, choose the row and column where the piece you wish to move is located! (both values must be >= 1 and <= 8")
+                r = int(input())
+                c = int(input())
+                cp = [r, c]
+                if self.availablePicks(team).count(cp) > 0:
+                    p = self.getPiece(r, c, team)
                     inRange = self.inRange(p, r, c, team)
                     print("you selected the " + str(p) + " in row " + str(r) + " and column" + str(c))
-                    print("if you wish to move this piece, input 1. Otherwise, input 0 to select another one. "
-                          "Failure to comply with this simple instruction will not only mean you are dumb, "
-                          "but will also be seen as consenting to move the selected piece")
-                    w = input()
-                    if int(w) + 1 != 1:
-                        print("congratulations, you have just decided, or been forced to, move the "
-                              "piece you previously selected! "
-                              "please input the row and column where the position you want to move it to is "
-                              "located.")
-                        nr = int(input())
-                        nc = int(input())
-                        cp = [nr, nc]
-                        if nc != c or nr != r:
-                            if inRange.count(cp) > 0:
-                                if str(p) == "p" or str(p) == "P":
-                                    if p.promotionRow == nr:
-                                        print(
-                                            "Your pawn reached the promotion row, as such you must now promote it! type the symbol of a piece of your choice (except pawns or kings) to replace the pawn with it")
-                                        self.movePiece(r, c, nr, nc)
-                                        self.promotePawn(nr, nc, team, 0)
-                                        break
+                    print("please input the row and column where the position you want to move it to is located. If you dont want to move this piece, input 0 and 0")
+                    nr = int(input())
+                    nc = int(input())
+                    np = [nr, nc]
+                    if inRange.count(np) > 0:
+                        if p.type == "p":
+                            if p.promotionRow == nr:
+                                print("Your pawn reached the promotion row, as such you must now promote it! type the symbol of a piece of your choice (except pawns or kings) to replace the pawn with it")
                                 self.movePiece(r, c, nr, nc)
+                                self.promotePawn(nr, nc, team, 0)
                                 break
-                            else:
-                                print(
-                                    "error: that was not a position your piece could move to! please do the process all over again. Thats your reward. For being dumb.")
+                        if p.type == "k":
+                            if abs(nc - c) > 1:
+                                if nc - c < 0:
+                                    self.movePiece(r, c - 4, nr, nc + 1)
+                                else:
+                                    self.movePiece(r, c + 3, nr, nc - 1)
+                        self.movePiece(r, c, nr, nc)
+                        break
+                    else:
+                        print("error: that was not a position your piece could move to!")
+                else:
+                    print("That position does not have a piece you can pick! please select another position")
+        else:
+            self.winningTeam = team + 1 - 2 * team
 
     def piecesOnBoard(self):
         n = 0
