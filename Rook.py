@@ -3,11 +3,21 @@ from Piece import Piece
 
 class Rook(Piece):
 
-    def __init__(self, ID, team):
+    def __init__(self, ID, team, r, c):
         super().__init__(ID, team, 5.0)
+        self.r = r
+        self.c = c
 
     # noinspection PyAttributeOutsideInit
-    def validMove(self, board, cr, cc, nr, nc):
+    def validMove(self, piecesOnBoard, nr, nc):
+        cc = self.c
+        cr = self.r
+        pwp = []
+        npp = "X"
+        for p in piecesOnBoard:
+            if p.r == nr and p.c == nc:
+                npp = p
+            pwp.append([p.r, p.c])
         if nr == cr and nc == cc:
             return False
         if nr != cr and nc != cc:
@@ -29,11 +39,11 @@ class Rook(Piece):
                 # range function is to be nr then it means nr < cr, and our computation will do either nr - 0/2
                 # or cr + 0/2, and vice-versa if the first argument is to be cr. This is to be used for vertical
                 # movement.
-                if not str(board[r][cc]).isspace():
+                if pwp.count([r, cc]) > 0:
                     if r != nr:
                         return False
                     else:
-                        if board[r][cc].team == self.team:
+                        if npp.team == self.team:
                             return False
             return True
         else:
@@ -45,10 +55,10 @@ class Rook(Piece):
                 cb = 0
             for c in range(nc - int((abs(nc - cc) + (nc - cc)) / 2) + nb, cc + int((abs(nc - cc) + (nc - cc)) / 2) + cb):
                 # same as explained in the comment bloc above, but for lengthwise movement.
-                if not str(board[cr][c]).isspace():
+                if pwp.count([cr, c]) > 0:
                     if c != nc:
                         return False
                     else:
-                        if board[cr][c].team == self.team:
+                        if npp.team == self.team:
                             return False
             return True
