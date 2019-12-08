@@ -223,7 +223,7 @@ class Board:
             self.team1Moves.append(move)
 
     def bigBrainTime(self, team, IQ):
-        bestPlay = [None, 0, 0, 0, 0, 0]
+        bestPlay = ["X", 0, 0, 0, 0, 0]
         playValue = 0.0
         bestValue = 0.0
         if IQ > 0:
@@ -337,10 +337,21 @@ class Board:
         self.Castled = False
         bestPlay = self.bigBrainTime(t, 2)
         p = bestPlay[0]
-        cr = bestPlay[1]
-        cc = bestPlay[2]
-        nr = bestPlay[3]
-        nc = bestPlay[4]
+        if p == "X":
+            a = self.availablePicks(t)
+            ci = random.randint(len(a) - 1)
+            cr = a[ci][0]
+            cc = a[ci][1]
+            p = self.getPiece(cr, cc, t)
+            np = self.inRange(p, cr, cc, t)
+            ni = random.randint(len(np) - 1)
+            nr = np[ni][0]
+            nc = np[ni][1]
+        else:
+            cr = bestPlay[1]
+            cc = bestPlay[2]
+            nr = bestPlay[3]
+            nc = bestPlay[4]
         if str(p) == " p " or str(p) == " P ":
             self.movePiece(cr, cc, nr, nc)
             if p.promotionRow == nr:
