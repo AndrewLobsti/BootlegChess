@@ -245,6 +245,7 @@ class Board:
                             playValue += self.getPiece(i[0], i[1], et).value
                         s = self.square(i[0], i[1])
                         self.boardReplace(p, " ", y[0], y[1], i[0], i[1])
+                        willDie = False
                         for ep in self.availablePicks(et):
                             e = self.getPiece(ep[0], ep[1], et)
                             em = self.inRange(e, ep[0], ep[1], et)
@@ -252,8 +253,12 @@ class Board:
                                 for ei in em:
                                     if self.availablePicks(team).count(ei) > 0:
                                         playValue -= self.getPiece(ei[0], ei[1], team).value
-                        futureBestPlay = self.bigBrainTime(team, IQ - 1)
-                        playValue += futureBestPlay[5]
+                                        mp = [i[0], i[1]]
+                                        if mp == ei:
+                                            willDie = True
+                        if willDie is False:
+                            futureBestPlay = self.bigBrainTime(team, IQ - 1)
+                            playValue += futureBestPlay[5]
                         if playValue >= bestValue:
                             bestValue = playValue
                             bestPlay[0] = p
