@@ -12,40 +12,37 @@ class King(Piece):
             return False
         if abs(nr - cr) > 1:
             return False
-        if board.validIndex(nr, nc):
-            if abs(nc - cc) == 2:  # Castling Code
-                if nr != cr or self.neverMoved is False or str(board.square(nr, nc)).isspace() is False:
-                    return False
-                if int((abs(nc - cc) + (nc - cc)) / 2) != 0:
-                    rookColumn = 8
-                    scanStart = cc + 1
-                    scanEnd = 8
-                else:
-                    rookColumn = 1
-                    scanStart = 2
-                    scanEnd = cc
-                if str(board.square(cr, rookColumn)).isspace():
-                    return False
-                elif board.square(cr, rookColumn).team != self.team:
-                    return False
-                elif board.square(cr, rookColumn).type != "r":
-                    return False
-                for c in range(scanStart, scanEnd):
-                    if not str(board.square(cr, c)).isspace():
-                        return False
-                return True
+        if abs(nc - cc) == 2:  # Castling Code
+            if nr != cr or self.neverMoved is False or str(board[nr][nc]).isspace() is False:
+                return False
+            if int((abs(nc - cc) + (nc - cc)) / 2) != 0:
+                rookColumn = 7
+                scanStart = cc + 1
+                scanEnd = 8
             else:
-                if abs(nc - cc) > 1:
+                rookColumn = 0
+                scanStart = 2
+                scanEnd = cc
+            if str(board[nr][rookColumn]).isspace():
+                return False
+            elif board[nr][rookColumn].team != self.team:
+                return False
+            elif board[nr][rookColumn].type != "r":
+                return False
+            for c in range(scanStart, scanEnd):
+                if not str(board[cr][c]).isspace():
                     return False
-                if nc != cc and nr != cr:
-                    if abs(nc - cc) != abs(nr - cr):
-                        return False
-                if not str(board.square(nr, nc)).isspace():
-                    if board.square(nr, nc).team != self.team:
-                        return True
-                    else:
-                        return False
-                else:
-                    return True
+            return True
         else:
-            return False
+            if abs(nc - cc) > 1:
+                return False
+            if nc != cc and nr != cr:
+                if abs(nc - cc) != abs(nr - cr):
+                    return False
+            if not str(board[nr][nc]).isspace():
+                if board[nr][nc].team != self.team:
+                    return True
+                else:
+                    return False
+            else:
+                return True

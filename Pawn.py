@@ -7,13 +7,12 @@ class Pawn(Piece):
         super().__init__(ID, team, 1.0)
         self.startingRow = startingRow
         self.ds = 1
-        if startingRow == 7:
+        if startingRow == 6:
             self.ds = 0
-        self.promotionRow = int(startingRow - ((((startingRow - 7) + 1) / abs((startingRow - 7) + 1)) * 6))
+        self.promotionRow = int(startingRow - ((((startingRow - 6) + 1) / abs((startingRow - 6) + 1)) * 6))
 
     # noinspection PyAttributeOutsideInit
     def validMove(self, board, cr, cc, nr, nc):
-        if board.validIndex(nr, nc):
             if nr == cr and nc == cc:
                 return False
             maxRange = 1
@@ -29,13 +28,13 @@ class Pawn(Piece):
                 if abs(nr - cr) > maxRange or abs(nc - cc) > maxRange:
                     return False
                 else:
-                    if not str(board.square(nr, nc)).isspace():
-                        if board.square(nr, nc).team != self.team:
+                    if not str(board[nr][nc]).isspace():
+                        if board[nr][nc].team != self.team:
                             return True
                         else:
                             return False
-                    elif str(board.square(cr, nc)).isspace() is False and board.square(cr, nc).type == "p" and board.square(cr, nc).team != self.team:  # En passant attack code
-                        if abs(cr - board.square(cr, nc).startingRow) == 2 and board.square(cr, nc).moves == 1:
+                    elif str(board[nr][nc]).isspace() is False and board[nr][nc].type == "p" and board[nr][nc].team != self.team:  # En passant attack code
+                        if abs(cr - board[nr][nc].startingRow) == 2 and board[nr][nc].moves == 1:
                             return True
                 return False
             else:
@@ -58,8 +57,6 @@ class Pawn(Piece):
                     nb = 0
                     cb = 0
                 for r in range(nr - int((abs(nr - cr) + (nr - cr)) / 2) + nb, cr + int((abs(nr - cr) + (nr - cr)) / 2) + cb):
-                    if not str(board.square(r, cc)).isspace():
+                    if not str(board[nr][nc]).isspace():
                         return False
                 return True
-        else:
-            return False

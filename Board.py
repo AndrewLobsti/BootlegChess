@@ -6,73 +6,77 @@ import Knight
 import Bishop
 import Queen
 import King
+import time
 
 
 class Board:
 
     def __init__(self):
         self.board = []
-        self.shadowRealm = []
         self.team0Moves = []
         self.team1Moves = []
+        self.shadowRealm = []
         self.teamInCheck = 2
         self.winningTeam = 2
         self.Castled = False
 
     def boardConstructor(self):
         self.board.clear()
-        for r in range(9):
+        for r in range(8):
             row = []
-            for c in range(9):
-                if r != 0:
-                    if c == 0:
-                        row.append(str(r))
-                    else:
-                        row.append(" ")
-                elif c == 0:
-                    row.append("X")
-                else:
-                    row.append(str(c))
-
+            for c in range(8):
+                row.append(" ")
             self.board.append(row)
 
     def displayBoard(self):
+        print("X    1    2    3    4    5    6    7    8")
+        rn = 1
         for r in self.board:
-            print(r)
+            print(str(rn) + "  " + str(r))
+            rn += 1
 
     def square(self, r, c):
         return self.board[r][c]
 
     def boardReplace(self, p, o, cr, cc, nr, nc):
-        self.board[nr].pop(nc)
-        self.board[nr].insert(nc, p)
+        self.board[nr][nc] = p
+        # self.board[nr].pop(nc)
+        # self.board[nr].insert(nc, p)
         self.board[cr][cc] = o
 
     def validIndex(self, r, c):
-        return 9 > r > 0 and 9 > c > 0
+        return 8 > r >= 0 and 8 > c >= 0
 
     def availablePicks(self, team):
         availablePicks = []
-        for r in range(1, 9):
-            for c in range(1, 9):
-                p = self.square(r, c)
+        r = 0
+        for rl in self.board:
+            c = 0
+            for ce in rl:
+                p = ce
                 if not str(p).isspace():
                     if p.team == team:
                         i = [r, c]
                         availablePicks.append(i)
+                c += 1
+            r += 1
         return availablePicks
 
     def kingInCheck(self, team, future):
         for i in self.availablePicks(team):
             p = self.square(i[0], i[1])
-            for r in range(1, 9):
-                for c in range(1, 9):
-                    if p.validMove(self, i[0], i[1], r, c):
-                        if str(self.square(r, c)) == " k " or str(self.square(r, c)) == " K ":
+            r = 0
+            for rl in self.board:
+                c = 0
+                for ce in rl:
+                    if p.validMove(self.board, i[0], i[1], r, c):
+                        if str(ce) == " k " or str(ce) == " K ":
                             # if not future:
-                                # print(str(p) + " in " + str(i[0]) + "," + str(i[1]) + " has the enemy team in check!")
-                                # print(self.inRange(p, i[0], i[1], team))
+                            # print(str(p) + " in " + str(i[0]) + "," + str(i[1]) + " has the enemy team in check!")
+                            # print(self.inRange(p, i[0], i[1], team))
                             return True
+                    c += 1
+                r += 1
         return False
 
     def inAttackRange(self, team):
@@ -94,52 +98,46 @@ class Board:
         return False
 
     def inCheckRange(self, p, r, c, team):
-        for nr in range(1, 9):
-            for nc in range(1, 9):
-                if not str(self.square(nr, nc)).isspace():
-                    if p.validMove(self, r, c, nr, nc) is True and self.square(nr, nc).team != team and self.square(nr, nc).type == "k":
+        nr = 0
+        for nrl in self.board:
+            nc = 0
+            for nce in nrl:
+                if not str(nce).isspace():
+                    if p.validMove(self.board, r, c, nr, nc) is True and self.square(nr, nc).team != team and self.square(nr, nc).type == "k":
                         return True
+                nc += 1
+            nr += 1
         return False
 
     def inRange(self, p, cr, cc, team):
         inRange = []
-        for r in range(1, 9):
-            for c in range(1, 9):
-                if p.validMove(self, cr, cc, r, c):
+        r = 0
+        for rl in self.board:
+            c = 0
+            for ce in rl:
+                if p.validMove(self.board, cr, cc, r, c):
                     nc = c
                     append = True
-                    if str(p) == " k " or str(p) == " K ":  # not castling trough check check
+                    if p.type == "k":  # not castling trough check check
                         if abs(c - cc) > 1:
                             if self.kingInCheck(team + 1 - 2 * team, False):
                                 append = False
-                            s = self.square(r, nc)
-                            # self.board[r].pop(nc)
-                            # self.board[r].insert(nc, p)
-                            # self.board[cr][cc] = " "
                             self.boardReplace(p, " ", cr, cc, r, nc)
                             if self.kingInCheck(team + 1 - 2 * team, True):
                                 append = False
-                            # self.board[r].pop(nc)
-                            # self.board[r].insert(nc, s)
-                            # self.board[cr][cc] = p
-                            self.boardReplace(s, p, cr, cc, r, nc)
-                            if(c - cc) < 0:
+                            self.boardReplace(ce, p, cr, cc, r, nc)
+                            if (c - cc) < 0:
                                 nc = c + 1
                             else:
                                 nc = c - 1
-                    s = self.square(r, nc)
-                    # self.board[r].pop(nc)
-                    # self.board[r].insert(nc, p)
-                    # self.board[cr][cc] = " "
                     self.boardReplace(p, " ", cr, cc, r, nc)
                     if not self.kingInCheck(team + 1 - 2 * team, True):
                         if append:
                             square = [r, c]
                             inRange.append(square)
-                    # self.board[r].pop(nc)
-                    # self.board[r].insert(nc, s)
-                    # self.board[cr][cc] = p
-                    self.boardReplace(s, p, cr, cc, r, nc)
+                    self.boardReplace(ce, p, cr, cc, r, nc)
+                c += 1
+            r += 1
         return inRange
 
     def getPiece(self, r, c, team):
@@ -161,25 +159,15 @@ class Board:
         if not str(np).isspace():
             # print(str(cp) + " just ate " + str(np) + " !")
             self.shadowRealm.append(np)
-            # print(self.shadowRealm)
-            # self.board[nr].pop(nc)
-            # self.board[nr].insert(nc, cp)
-            # self.board[cr][cc] = " "
             self.boardReplace(cp, " ", cr, cc, nr, nc)
         elif cp.type == "p" and nc != cc:
             pp = self.square(cr, nc)
             # print(str(cp) + " just ate " + str(pp) + " !")
+            # print("er passant!")
             self.shadowRealm.append(pp)
-            # print(self.shadowRealm)
-            # self.board[nr].pop(nc)
-            # self.board[nr].insert(nc, cp)
-            # self.board[cr][cc] = " "
             self.boardReplace(cp, " ", cr, cc, nr, nc)
             self.board[cr][nc] = " "
         else:
-            # self.board[nr].pop(nc)
-            # self.board[nr].insert(nc, cp)
-            # self.board[cr][cc] = " "
             self.boardReplace(cp, " ", cr, cc, nr, nc)
         self.teamInCheck = 2
         if self.kingInCheck(0, False):
@@ -234,6 +222,54 @@ class Board:
             move = str(p) + ", " + str(y[0]) + ", " + str(y[1]) + ", " + str(np[0]) + ", " + str(np[1])
             self.team1Moves.append(move)
 
+    def bigBrainTime(self, team, IQ):
+        bestPlay = [None, 0, 0, 0, 0, 0]
+        playValue = 0.0
+        bestValue = 0.0
+        if IQ > 0:
+            et = team + 1 - 2 * team
+            a = self.availablePicks(team)
+            piecesInDanger = self.inAttackRange(et)
+            for x in a:
+                y = self.getPiece(x[0], x[1], team)
+                if piecesInDanger.count(x) > 0:
+                    bestValue -= y.value
+            for y in a:
+                playValue = 0.0
+                p = self.getPiece(y[0], y[1], team)
+                m = self.inRange(p, y[0], y[1], team)
+                if len(m) > 0:
+                    for i in m:
+                        playValue = 0.0
+                        if self.availablePicks(et).count(i) > 0:
+                            playValue += self.getPiece(i[0], i[1], et).value
+                        s = self.square(i[0], i[1])
+                        self.boardReplace(p, " ", y[0], y[1], i[0], i[1])
+                        for ep in self.availablePicks(et):
+                            e = self.getPiece(ep[0], ep[1], et)
+                            em = self.inRange(e, ep[0], ep[1], et)
+                            if len(em) > 0:
+                                for ei in em:
+                                    if self.availablePicks(team).count(ei) > 0:
+                                        playValue -= self.getPiece(ei[0], ei[1], team).value
+                        futureBestPlay = self.bigBrainTime(team, IQ - 1)
+                        playValue += futureBestPlay[5]
+                        if playValue >= bestValue:
+                            bestValue = playValue
+                            bestPlay[0] = p
+                            bestPlay[1] = y[0]
+                            bestPlay[2] = y[1]
+                            bestPlay[3] = i[0]
+                            bestPlay[4] = i[1]
+                            bestPlay[5] = bestValue
+                        self.boardReplace(s, p, y[0], y[1], i[0], i[1])
+            # print(playValue)
+            # print(bestValue)
+            # print(bestPlay)
+            if bestValue < -500.0:
+                self.winningTeam = et
+        return bestPlay
+
     # noinspection PyUnusedLocal
     def chooseMove(self, possibleMoves, team):
         bestPlay = [None, 0, 0, 0, 0]
@@ -264,6 +300,7 @@ class Board:
                     y = self.getPiece(x[0], x[1], team + 1 - 2 * team)
                     if y != 1 and willBeInDanger is False:
                         playValue += y.value * 0.05
+                # self.chooseMove(possibleMovements, team, IQ - 1)
                 self.boardReplace(s, p, i[0], i[1], m[0], m[1])
                 inDanger = self.isAttackable(i[0], i[1], team + 1 - 2 * team)
                 if p.type == "p":
@@ -289,6 +326,32 @@ class Board:
         print(bestValue)
         print(bestPlay)
         return bestPlay
+
+    def GLadOSX(self, team):
+        t = team + 1 - 2 * team
+        self.Castled = False
+        bestPlay = self.bigBrainTime(t, 2)
+        p = bestPlay[0]
+        cr = bestPlay[1]
+        cc = bestPlay[2]
+        nr = bestPlay[3]
+        nc = bestPlay[4]
+        if str(p) == " p " or str(p) == " P ":
+            self.movePiece(cr, cc, nr, nc)
+            if p.promotionRow == nr:
+                self.promotePawn(nr, nc, t, 2)
+        elif str(p) == " k " or str(p) == " K ":
+            if abs(nc - cc) > 1:
+                print("Castling!")
+                self.Castled = True
+                if nc - cc < 0:
+                    self.movePiece(cr, cc - 4, nr, nc + 1)
+                else:
+                    self.movePiece(cr, cc + 3, nr, nc - 1)
+            else:
+                self.movePiece(cr, cc, nr, nc)
+        else:
+            self.movePiece(cr, cc, nr, nc)
 
     def GLadOS(self, team):
         t = team + 1 - 2 * team
@@ -386,22 +449,25 @@ class Board:
                 possiblePicks.append(p)
         if len(possiblePicks) > 0:
             while True:
-                print(player + " pieces player, choose the row and column where the piece you wish to move is located! (both values must be >= 1 and <= 8")
-                r = int(input())
-                c = int(input())
+                print(
+                    player + " pieces player, choose the row and column where the piece you wish to move is located! (both values must be >= 1 and <= 8")
+                r = int(input()) - 1
+                c = int(input()) - 1
                 cp = [r, c]
                 if self.availablePicks(team).count(cp) > 0:
                     p = self.getPiece(r, c, team)
                     inRange = self.inRange(p, r, c, team)
                     print("you selected the " + str(p) + " in row " + str(r) + " and column" + str(c))
-                    print("please input the row and column where the position you want to move it to is located. If you dont want to move this piece, input 0 and 0")
-                    nr = int(input())
-                    nc = int(input())
+                    print(
+                        "please input the row and column where the position you want to move it to is located. If you dont want to move this piece, input 0 and 0")
+                    nr = int(input()) - 1
+                    nc = int(input()) - 1
                     np = [nr, nc]
                     if inRange.count(np) > 0:
                         if p.type == "p":
                             if p.promotionRow == nr:
-                                print("Your pawn reached the promotion row, as such you must now promote it! type the symbol of a piece of your choice (except pawns or kings) to replace the pawn with it")
+                                print(
+                                    "Your pawn reached the promotion row, as such you must now promote it! type the symbol of a piece of your choice (except pawns or kings) to replace the pawn with it")
                                 self.movePiece(r, c, nr, nc)
                                 self.promotePawn(nr, nc, team, 0)
                                 break
@@ -452,6 +518,7 @@ class Board:
             self.shadowRealm.clear()
             team = random.randint(0, 1)
             northstart = random.randint(0, 1)
+            enable = True
             for r in self.board:
                 for c in range(1, 9):
                     if r[0] == str((2 * northstart) + 7 * (1 - northstart)):
@@ -460,38 +527,39 @@ class Board:
                     elif r[0] == str(2 + 5 * northstart):
                         r.pop(c)
                         r.insert(c, Pawn.Pawn("p", team + 1 - 2 * team, 2 + 5 * northstart))
-                    if r[0] == str((1 * northstart) + 8 * (1 - northstart)):
-                        if c == 1 or c == 8:
-                            r.pop(c)
-                            r.insert(c, Rook.Rook("r", team))
-                        if c == 2 or c == 7:
-                            r.pop(c)
-                            r.insert(c, Knight.Knight("h", team))
-                        if c == 3 or c == 6:
-                            r.pop(c)
-                            r.insert(c, Bishop.Bishop("b", team))
-                        if c == 4:
-                            r.pop(c)
-                            r.insert(c, Queen.Queen("q", team))
-                        if c == 5:
-                            r.pop(c)
-                            r.insert(c, King.King("k", team))
-                    elif r[0] == str(1 + 7 * northstart):
-                        if c == 1 or c == 8:
-                            r.pop(c)
-                            r.insert(c, Rook.Rook("r", team + 1 - 2 * team))
-                        if c == 2 or c == 7:
-                            r.pop(c)
-                            r.insert(c, Knight.Knight("h", team + 1 - 2 * team))
-                        if c == 3 or c == 6:
-                            r.pop(c)
-                            r.insert(c, Bishop.Bishop("b", team + 1 - 2 * team))
-                        if c == 4:
-                            r.pop(c)
-                            r.insert(c, Queen.Queen("q", team + 1 - 2 * team))
-                        if c == 5:
-                            r.pop(c)
-                            r.insert(c, King.King("k", team + 1 - 2 * team))
+                    if enable:
+                        if r[0] == str((1 * northstart) + 8 * (1 - northstart)):
+                            if c == 1 or c == 8:
+                                r.pop(c)
+                                r.insert(c, Rook.Rook("r", team))
+                            if c == 2 or c == 7:
+                                r.pop(c)
+                                r.insert(c, Knight.Knight("h", team))
+                            if c == 3 or c == 6:
+                                r.pop(c)
+                                r.insert(c, Bishop.Bishop("b", team))
+                            if c == 4:
+                                r.pop(c)
+                                r.insert(c, Queen.Queen("q", team))
+                            if c == 5:
+                                r.pop(c)
+                                r.insert(c, King.King("k", team))
+                        elif r[0] == str(1 + 7 * northstart):
+                            if c == 1 or c == 8:
+                                r.pop(c)
+                                r.insert(c, Rook.Rook("r", team + 1 - 2 * team))
+                            if c == 2 or c == 7:
+                                r.pop(c)
+                                r.insert(c, Knight.Knight("h", team + 1 - 2 * team))
+                            if c == 3 or c == 6:
+                                r.pop(c)
+                                r.insert(c, Bishop.Bishop("b", team + 1 - 2 * team))
+                            if c == 4:
+                                r.pop(c)
+                                r.insert(c, Queen.Queen("q", team + 1 - 2 * team))
+                            if c == 5:
+                                r.pop(c)
+                                r.insert(c, King.King("k", team + 1 - 2 * team))
             turns = 0
             pr = self.piecesOnBoard()
             while turns < 500 and pr > 3 and self.winningTeam == 2:
@@ -550,7 +618,8 @@ class Board:
                 uttw += len(l)
                 tttw += len(l)
                 upperWins += 1
-        print(str(lowerWins) + "," + str(upperWins) + "," + str(lttw / lowerWins) + "," + str(uttw / upperWins) + "," + str(tttw / 300))
+        print(str(lowerWins) + "," + str(upperWins) + "," + str(lttw / lowerWins) + "," + str(
+            uttw / upperWins) + "," + str(tttw / 300))
 
     def gameStart(self):
         print("CHESS MEGA")
@@ -576,47 +645,51 @@ class Board:
                 northstart = 0
         print("you can read matey, so your IQ is at least 80. You have successfully passed the entry test, "
               "and we will now setup the rest.")
+        rn = 0
+        enable = True
         for r in self.board:
-            for c in range(1, 9):
-                if r[0] == str((2 * northstart) + 7 * (1 - northstart)):
+            for c in range(0, 8):
+                if rn == (1 * northstart) + 6 * (1 - northstart):
                     r.pop(c)
-                    r.insert(c, Pawn.Pawn("p", team, (2 * northstart) + 7 * (1 - northstart)))
-                elif r[0] == str(2 + 5 * northstart):
+                    r.insert(c, Pawn.Pawn("p", team, (1 * northstart) + 6 * (1 - northstart)))
+                elif rn == 1 + 5 * northstart:
                     r.pop(c)
-                    r.insert(c, Pawn.Pawn("p", team + 1 - 2 * team, 2 + 5 * northstart))
-                if r[0] == str((1 * northstart) + 8 * (1 - northstart)):
-                    if c == 1 or c == 8:
-                        r.pop(c)
-                        r.insert(c, Rook.Rook("r", team))
-                    if c == 2 or c == 7:
-                        r.pop(c)
-                        r.insert(c, Knight.Knight("h", team))
-                    if c == 3 or c == 6:
-                        r.pop(c)
-                        r.insert(c, Bishop.Bishop("b", team))
-                    if c == 4:
-                        r.pop(c)
-                        r.insert(c, Queen.Queen("q", team))
-                    if c == 5:
-                        r.pop(c)
-                        r.insert(c, King.King("k", team))
-                elif r[0] == str(1 + 7 * northstart):
-                    if c == 1 or c == 8:
-                        r.pop(c)
-                        r.insert(c, Rook.Rook("r", team + 1 - 2 * team))
-                    if c == 2 or c == 7:
-                        r.pop(c)
-                        r.insert(c, Knight.Knight("h", team + 1 - 2 * team))
-                    if c == 3 or c == 6:
-                        r.pop(c)
-                        r.insert(c, Bishop.Bishop("b", team + 1 - 2 * team))
-                    if c == 4:
-                        r.pop(c)
-                        r.insert(c, Queen.Queen("q", team + 1 - 2 * team))
-                    if c == 5:
-                        r.pop(c)
-                        r.insert(c, King.King("k", team + 1 - 2 * team))
-            print(r)
+                    r.insert(c, Pawn.Pawn("p", team + 1 - 2 * team, 1 + 5 * northstart))
+                if enable:
+                    if rn == 0 + 7 * (1 - northstart):
+                        if c == 0 or c == 7:
+                            r.pop(c)
+                            r.insert(c, Rook.Rook("r", team))
+                        if c == 1 or c == 6:
+                            r.pop(c)
+                            r.insert(c, Knight.Knight("h", team))
+                        if c == 2 or c == 5:
+                            r.pop(c)
+                            r.insert(c, Bishop.Bishop("b", team))
+                        if c == 3:
+                            r.pop(c)
+                            r.insert(c, Queen.Queen("q", team))
+                        if c == 4:
+                            r.pop(c)
+                            r.insert(c, King.King("k", team))
+                    elif rn == 0 + 7 * northstart:
+                        if c == 0 or c == 7:
+                            r.pop(c)
+                            r.insert(c, Rook.Rook("r", team + 1 - 2 * team))
+                        if c == 1 or c == 6:
+                            r.pop(c)
+                            r.insert(c, Knight.Knight("h", team + 1 - 2 * team))
+                        if c == 2 or c == 5:
+                            r.pop(c)
+                            r.insert(c, Bishop.Bishop("b", team + 1 - 2 * team))
+                        if c == 3:
+                            r.pop(c)
+                            r.insert(c, Queen.Queen("q", team + 1 - 2 * team))
+                        if c == 4:
+                            r.pop(c)
+                            r.insert(c, King.King("k", team + 1 - 2 * team))
+            rn += 1
+        self.displayBoard()
         while True:
             print(
                 "setup complete! now select number of players: 1 for vs AI, and 2 for local multiplayer")
@@ -647,7 +720,9 @@ class Board:
                 elif self.winningTeam == 2:
                     print(
                         "Dr Eggman is the Lowercase pieces player, please wait for his eggxcelency to input his move!")
-                    self.GLadOS(team)
+                    startTime = time.perf_counter()
+                    self.GLadOSX(team)
+                    print(time.perf_counter() - startTime)
                     self.displayBoard()
                 if team == 1:
                     if self.winningTeam == 2:
@@ -656,7 +731,9 @@ class Board:
                 elif self.winningTeam == 2:
                     print(
                         "Dr Eggman is the Uppercase pieces player, please wait for his eggxcelency to input his move!")
-                    self.GLadOS(team)
+                    startTime = time.perf_counter()
+                    self.GLadOSX(team)
+                    print(time.perf_counter() - startTime)
                     self.displayBoard()
             print("team " + str(self.winningTeam) + " won the match!")
 
