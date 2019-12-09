@@ -8,7 +8,7 @@ class Pawn(Piece):
         self.startingRow = startingRow
         self.r = startingRow
         self.c = c
-        self.ds = 1
+        self.ds = 1  # movement direction is south if this is 1
         if startingRow == 6:
             self.ds = 0
         self.promotionRow = int(startingRow - ((((startingRow - 6) + 1) / abs((startingRow - 6) + 1)) * 6))
@@ -16,13 +16,14 @@ class Pawn(Piece):
     # noinspection PyAttributeOutsideInit
     def validMove(self, piecesList, nr, nc):
         pwp = []  # positions with pieces
-        nppData = []
-        npp = "X"  # piece in the position we want to move to
+        npp = "X"  # piece in the position we want to move t, if it exists
+        pp = "X"  # en passant attack target, if it exists
         for p in piecesList:
             pwp.append([p.r, p.c])
             if p.r == nr and p.c == nc:
-                npp = p  # piece in the position we want to move to, if it exists
-                nppData.append([p.team, p.r, p.c])
+                npp = p
+            if p.r == self.r and p.c == nc:
+                pp = p
         if nr == self.r and nc == self.c:
             return False
         maxRange = 1
@@ -38,11 +39,12 @@ class Pawn(Piece):
             if abs(nr - self.r) > maxRange or abs(nc - self.c) > maxRange:
                 return False
             else:
-                if nppData.count([self.team + 1 - 2 * self.team, nr, nc]) > 0:
+                if npp != "X":
                     return True
-                elif nppData.count([self.team + 1 - 2 * self.team, nr, nc]) > 0 and npp.type == "p":  # En passant attack code
-                    if abs(self.r - npp.startingRow) == 2 and npp.moves == 1:
-                        return True
+                elif pp != "X":
+                    if pp.type == "p":  # En passant attack code
+                        if abs(self.r - pp.startingRow) == 2 and pp.moves == 1:
+                            return True
             return False
         else:
             if nr == self.r:

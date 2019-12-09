@@ -6,6 +6,7 @@ import Bishop
 import Queen
 import King
 import time
+import cProfile
 
 
 class Board:
@@ -19,6 +20,9 @@ class Board:
         self.teamInCheck = 2
         self.winningTeam = 2
         self.Castled = False
+        self.enemyMovesDatabase = []
+        self.responseMovesDatabase = []
+        self.movePerformedByEnemy = []
 
     def boardConstructor(self):
         self.board.clear()
@@ -111,17 +115,51 @@ class Board:
         if self.kingInCheck(team + 1 - 2 * team, False):
             k.c = kc
             return False
+        k.c = kc
         return True
+
+    def scanRange(self, p):
+        sr = [0, 8, 0, 8]
+        if p.type == "p":
+            rsr = 2
+            sr[2] = p.c - 1
+            sr[3] = p.c + 2
+            if p.neverMoved:
+                rsr = 3
+            if p.ds == 1:
+                sr[0] = p.r
+                sr[1] = p.r + rsr
+            else:
+                sr[0] = p.r - rsr + 1
+                sr[1] = p.r + 1
+        elif p.type == "h":
+            sr[0] = p.r - 2
+            sr[1] = p.r + 3
+            sr[2] = p.c - 2
+            sr[3] = p.c + 3
+        elif p.type == "k":
+            sr[0] = p.r - 1
+            sr[1] = p.r + 2
+            sr[2] = p.c - 1
+            sr[3] = p.c + 2
+        for i in range(0, len(sr)):
+            if sr[i] < 0:
+                sr[i] = 0
+            elif sr[i] > 8:
+                sr[i] = 8
+        return sr
 
     def inRange(self, p, team):
         inRange = []
-        for r in range(0, 8):
-            for c in range(0, 8):
+        sr = self.scanRange(p)
+        for r in range(sr[0], sr[1]):
+            for c in range(sr[2], sr[3]):
                 if p.validMove(self.PiecesOnBoard, r, c):
                     append = True
-                    if p.type == "k" and abs(p.c - c) > 1:
-                        if not self.castlingCheck(p, team):
-                            append = False
+                    if p.type == "k":
+                        if abs(p.c - c) > 1:
+                            if not self.castlingCheck(p, team):
+                                append = False
                     pr = p.r
                     pc = p.c
                     p.r = r
@@ -142,31 +180,32 @@ class Board:
         return 1
 
     def movePiece(self, p, nr, nc):
-        np = self.square(nr, nc)
+        np = self.getPiece(nr, nc, p.team + 1 - 2 * p.team)
         cr = p.r
         cc = p.c
-        p.r = nr
-        p.c = nc
-        for e in self.PiecesOnBoard:
-            if e.r == nr and e.c == nc:
-                np = e
         p.neverMoved = False
         p.moves += 1
-        if not str(np).isspace():
+        if np != 1:
             # print(str(cp) + " just ate " + str(np) + " !")
             self.shadowRealm.append(np)
             self.PiecesOnBoard.remove(np)
             self.boardReplace(p.ID, " ", cr, cc, nr, nc)
+            p.r = nr
+            p.c = nc
         elif p.type == "p" and nc != cc:
-            pp = self.square(cr, nc)
+            pp = self.getPiece(cr, nc, p.team + 1 - 2 * p.team)
             # print(str(cp) + " just ate " + str(pp) + " !")
             # print("er passant!")
             self.shadowRealm.append(pp)
-            self.PiecesOnBoard.remove(np)
+            self.PiecesOnBoard.remove(pp)
             self.boardReplace(p.ID, " ", cr, cc, nr, nc)
             self.board[cr][nc] = " "
+            p.r = nr
+            p.c = nc
         else:
             self.boardReplace(p.ID, " ", cr, cc, nr, nc)
+            p.r = nr
+            p.c = nc
         self.teamInCheck = 2
         if self.kingInCheck(0, False):
             self.teamInCheck = 1
@@ -246,21 +285,22 @@ class Board:
                     for i in m:
                         appendS = False
                         playValue = 0.0
+                        s = None
                         if self.availablePicks(et).count(i) > 0:
-                            playValue += self.getPiece(i[0], i[1], et).value
-                        s = self.getPiece(i[0], i[1], et)
+                            s = self.getPiece(i[0], i[1], et)
+                            playValue += s.value
+                            self.PiecesOnBoard.remove(s)
+                            appendS = True
                         pr = p.r
                         pc = p.c
                         p.r = i[0]
                         p.c = i[1]
-                        if s != 1:
-                            self.PiecesOnBoard.remove(s)
-                            appendS = True
                         # self.boardReplace(p.ID, " ", y[0], y[1], i[0], i[1])
                         for ep in self.availablePicks(et):
                             e = self.getPiece(ep[0], ep[1], et)
                             em = self.inRange(e, et)
                             if len(em) > 0:
+                                friendlyDeadPieces = []
                                 for ei in em:
                                     willDie = False
                                     er = e.r
@@ -269,18 +309,26 @@ class Board:
                                     e.c = ei[1]
                                     if self.availablePicks(team).count(ei) > 0:
                                         ftp = self.getPiece(ei[0], ei[1], team)  # friendly team piece
-                                        playValue -= ftp.value
-                                        self.PiecesOnBoard.remove(ftp)
-                                        mp = [i[0], i[1]]
-                                        if mp == ei:
-                                            willDie = True
-                                        if willDie is False:
-                                            futureBestPlay = self.bigBrainTime(team, IQ - 1)
-                                            playValue += futureBestPlay[5]
-                                        self.PiecesOnBoard.append(ftp)
-                                    else:
+                                        if friendlyDeadPieces.count(ftp) == 0:
+                                            playValue -= ftp.value
+                                            friendlyDeadPieces.append(ftp)
+                                            self.PiecesOnBoard.remove(ftp)
+                                            if IQ - 1 > 0:
+                                                futureBestPlay = self.bigBrainTime(team, IQ - 1)
+                                                playValue += futureBestPlay[5]
+                                                self.enemyMovesDatabase.append(ei)
+                                                self.responseMovesDatabase.append(futureBestPlay)
+                                            self.PiecesOnBoard.append(ftp)
+                                        elif IQ - 1 > 0:
+                                                futureBestPlay = self.bigBrainTime(team, IQ - 1)
+                                                playValue += futureBestPlay[5]
+                                                self.enemyMovesDatabase.append(ei)
+                                                self.responseMovesDatabase.append(futureBestPlay)
+                                    elif IQ - 1 > 0:
                                         futureBestPlay = self.bigBrainTime(team, IQ - 1)
                                         playValue += futureBestPlay[5]
+                                        self.enemyMovesDatabase.append(ei)
+                                        self.responseMovesDatabase.append(futureBestPlay)
                                     e.r = er
                                     e.c = ec
                         if playValue >= bestValue:
@@ -306,6 +354,13 @@ class Board:
     def GLadOSX(self, team):
         t = team + 1 - 2 * team
         self.Castled = False
+        # cProfile.runctx('self.bigBrainTime(t, 2)', globals(), locals())
+        # if len(self.responseMovesDatabase) > 0:
+            # i = self.enemyMovesDatabase.index(self.movePerformedByEnemy[0])
+            # bestPlay = self.responseMovesDatabase[i]
+            # self.responseMovesDatabase.clear()
+            # self.movePerformedByEnemy.clear()
+        # else:
         bestPlay = self.bigBrainTime(t, 2)
         p = bestPlay[0]
         cr = bestPlay[1]
@@ -326,6 +381,7 @@ class Board:
                     self.movePiece(self.getPiece(cr, cc + 3, t), nr, nc + 1)
             else:
                 self.movePiece(p, nr, nc)
+
         else:
             self.movePiece(p, nr, nc)
 
@@ -363,6 +419,7 @@ class Board:
                             if p.promotionRow == nr:
                                 print("Your pawn reached the promotion row, as such you must now promote it! type the symbol of a piece of your choice (except pawns or kings) to replace the pawn with it")
                                 self.movePiece(p, nr, nc)
+                                self.movePerformedByEnemy.append(np)
                                 self.promotePawn(nr, nc, team, 0)
                                 break
                         if p.type == "k":
@@ -372,6 +429,7 @@ class Board:
                                 else:
                                     self.movePiece(self.getPiece(r, c + 3, team), nr, nc + 1)
                         self.movePiece(p, nr, nc)
+                        self.movePerformedByEnemy.append(np)
                         break
                     else:
                         print("error: that was not a position your piece could move to!")
@@ -527,6 +585,7 @@ class Board:
                         "Dr Eggman is the Lowercase pieces player, please wait for his eggxcelency to input his move!")
                     startTime = time.perf_counter()
                     self.GLadOSX(team)
+                    self.movePerformedByEnemy.clear()
                     print(time.perf_counter() - startTime)
                     self.displayBoard()
                 if team == 1:
@@ -538,6 +597,7 @@ class Board:
                         "Dr Eggman is the Uppercase pieces player, please wait for his eggxcelency to input his move!")
                     startTime = time.perf_counter()
                     self.GLadOSX(team)
+                    self.movePerformedByEnemy.clear()
                     print(time.perf_counter() - startTime)
                     self.displayBoard()
             print("team " + str(self.winningTeam) + " won the match!")
