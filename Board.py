@@ -57,16 +57,20 @@ class Board:
 
     def kingInCheck(self, team, future):
         k = self.getKing(team + 1 - 2 * team)
-        for i in self.availablePicks(team):
-            p = self.getPiece(i[0], i[1], team)
-            if p.validMove(self.PiecesOnBoard, k.r, k.c):
+        if k != 1:
+            for i in self.availablePicks(team):
+                p = self.getPiece(i[0], i[1], team)
+                if p.validMove(self.PiecesOnBoard, k.r, k.c):
                     return True
-        return False
+            return False
+        else:
+            return True
 
     def getKing(self, team):
         for p in self.PiecesOnBoard:
             if p.type == "k" and p.team == team:
                 return p
+        return 1
 
     def inAttackRange(self, team):
         positions = []
@@ -98,12 +102,26 @@ class Board:
             nr += 1
         return False
 
+    def castlingCheck(self, k, team):
+        kc = k.c
+        if self.getPiece(k.r, k.c + 3, team) != -1:
+            k.c = k.c + 1
+        else:
+            k.c = k.c - 1
+        if self.kingInCheck(team + 1 - 2 * team, False):
+            k.c = kc
+            return False
+        return True
+
     def inRange(self, p, team):
         inRange = []
         for r in range(0, 8):
             for c in range(0, 8):
                 if p.validMove(self.PiecesOnBoard, r, c):
                     append = True
+                    if p.type == "k" and abs(p.c - c) > 1:
+                        if not self.castlingCheck(p, team):
+                            append = False
                     pr = p.r
                     pc = p.c
                     p.r = r
@@ -220,7 +238,10 @@ class Board:
             for y in a:
                 playValue = 0.0
                 p = self.getPiece(y[0], y[1], team)
-                m = self.inRange(p, team)
+                if p != 1:
+                    m = self.inRange(p, team)
+                else:
+                    m = []
                 if len(m) > 0:
                     for i in m:
                         appendS = False

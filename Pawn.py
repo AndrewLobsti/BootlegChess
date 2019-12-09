@@ -17,7 +17,7 @@ class Pawn(Piece):
     def validMove(self, piecesList, nr, nc):
         pwp = []  # positions with pieces
         nppData = []
-        npp = None  # piece in the position we want to move to
+        npp = "X"  # piece in the position we want to move to
         for p in piecesList:
             pwp.append([p.r, p.c])
             if p.r == nr and p.c == nc:
