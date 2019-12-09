@@ -257,21 +257,32 @@ class Board:
                             self.PiecesOnBoard.remove(s)
                             appendS = True
                         # self.boardReplace(p.ID, " ", y[0], y[1], i[0], i[1])
-                        willDie = False
-                        # for ep in self.availablePicks(et):
-                            # e = self.getPiece(ep[0], ep[1], et)
-                            # em = self.inRange(e, ep[0], ep[1], et, False)
-                        em = self.inAttackRange(et)
-                        if len(em) > 0:
-                            for ei in em:
-                                if self.availablePicks(team).count(ei) > 0:
-                                    playValue -= self.getPiece(ei[0], ei[1], team).value
-                                    mp = [i[0], i[1]]
-                                    if mp == ei:
-                                        willDie = True
-                        if willDie is False:
-                            futureBestPlay = self.bigBrainTime(team, IQ - 1)
-                            playValue += futureBestPlay[5]
+                        for ep in self.availablePicks(et):
+                            e = self.getPiece(ep[0], ep[1], et)
+                            em = self.inRange(e, et)
+                            if len(em) > 0:
+                                for ei in em:
+                                    willDie = False
+                                    er = e.r
+                                    ec = e.c
+                                    e.r = ei[0]
+                                    e.c = ei[1]
+                                    if self.availablePicks(team).count(ei) > 0:
+                                        ftp = self.getPiece(ei[0], ei[1], team)  # friendly team piece
+                                        playValue -= ftp.value
+                                        self.PiecesOnBoard.remove(ftp)
+                                        mp = [i[0], i[1]]
+                                        if mp == ei:
+                                            willDie = True
+                                        if willDie is False:
+                                            futureBestPlay = self.bigBrainTime(team, IQ - 1)
+                                            playValue += futureBestPlay[5]
+                                        self.PiecesOnBoard.append(ftp)
+                                    else:
+                                        futureBestPlay = self.bigBrainTime(team, IQ - 1)
+                                        playValue += futureBestPlay[5]
+                                    e.r = er
+                                    e.c = ec
                         if playValue >= bestValue:
                             bestValue = playValue
                             bestPlay[0] = p
@@ -295,7 +306,7 @@ class Board:
     def GLadOSX(self, team):
         t = team + 1 - 2 * team
         self.Castled = False
-        bestPlay = self.bigBrainTime(t, 3)
+        bestPlay = self.bigBrainTime(t, 2)
         p = bestPlay[0]
         cr = bestPlay[1]
         cc = bestPlay[2]
