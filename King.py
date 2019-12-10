@@ -4,7 +4,7 @@ from Piece import Piece
 class King(Piece):
 
     def __init__(self, ID, team, r, c):
-        super().__init__(ID, team, 1000.0)
+        super().__init__(ID, team, 100.0)
         self.r = r
         self.c = c
 

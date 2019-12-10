@@ -268,7 +268,7 @@ class Board:
             self.team1Moves.append(move)
 
     def bigBrainTime(self, team, IQ):
-        bestPlay = ["X", 0, 0, 0, 0, 0.0, 0]
+        bestPlay = ["X", 0, 0, 0.0, 0]
         playValue = 0.0
         bestValue = -2000.0
         if IQ > 0:
@@ -283,72 +283,37 @@ class Board:
                     m = []
                 if len(m) > 0:
                     for i in m:
-                        appendS = False
+                        toRemove = "X"
                         playValue = 0.0
-                        s = None
-                        if self.availablePicks(et).count(i) > 0:
-                            s = self.getPiece(i[0], i[1], et)
-                            playValue += s.value
-                            self.PiecesOnBoard.remove(s)
-                            appendS = True
                         pr = p.r
                         pc = p.c
                         p.r = i[0]
                         p.c = i[1]
-                        # self.boardReplace(p.ID, " ", y[0], y[1], i[0], i[1])
-                        for ep in self.availablePicks(et):
-                            e = self.getPiece(ep[0], ep[1], et)
-                            em = self.inRange(e, et)
-                            if len(em) > 0:
-                                friendlyDeadPieces = []
-                                for ei in em:
-                                    willDie = False
-                                    er = e.r
-                                    ec = e.c
-                                    e.r = ei[0]
-                                    e.c = ei[1]
-                                    if self.availablePicks(team).count(ei) > 0:
-                                        ftp = self.getPiece(ei[0], ei[1], team)  # friendly team piece
-                                        if friendlyDeadPieces.count(ftp) == 0:
-                                            playValue -= ftp.value
-                                            friendlyDeadPieces.append(ftp)
-                                            self.PiecesOnBoard.remove(ftp)
-                                            if IQ - 1 > 0:
-                                                futureBestPlay = self.bigBrainTime(team, IQ - 1)
-                                                playValue += futureBestPlay[5]
-                                                self.enemyMovesDatabase.append(ei)
-                                                self.responseMovesDatabase.append(futureBestPlay)
-                                            self.PiecesOnBoard.append(ftp)
-                                        elif IQ - 1 > 0:
-                                                futureBestPlay = self.bigBrainTime(team, IQ - 1)
-                                                playValue += futureBestPlay[5]
-                                                self.enemyMovesDatabase.append(ei)
-                                                self.responseMovesDatabase.append(futureBestPlay)
-                                    elif IQ - 1 > 0:
-                                        futureBestPlay = self.bigBrainTime(team, IQ - 1)
-                                        playValue += futureBestPlay[5]
-                                        self.enemyMovesDatabase.append(ei)
-                                        self.responseMovesDatabase.append(futureBestPlay)
-                                    e.r = er
-                                    e.c = ec
-                        if playValue >= bestValue:
-                            bestValue = playValue
-                            bestPlay[0] = p
-                            bestPlay[1] = y[0]
-                            bestPlay[2] = y[1]
-                            bestPlay[3] = i[0]
-                            bestPlay[4] = i[1]
-                            bestPlay[5] = bestValue
+                        fprange = self.inRange(p, team)
+                        apE = self.availablePicks(et)
+                        for ei in apE:
+                            ep = self.getPiece(ei[0], ei[1], et)
+                            if ei[0] != i[0] or ei[1] != i[1]:
+                                if fprange.count([ei[0], ei[1]]) > 0:
+                                    playValue += ep.value * 0.1
+                            else:
+                                toRemove = ep
+                                playValue += ep.value
+                        if playValue > bestValue and IQ - 1 > 0:
+                            if toRemove != "X":
+                                self.PiecesOnBoard.remove(toRemove)
+                            eBestResponsePlay = self.bigBrainTime(et, IQ - 1)
+                            if toRemove != "X":
+                                self.PiecesOnBoard.append(toRemove)
+                            playValue -= eBestResponsePlay[3]
                         p.r = pr
                         p.c = pc
-                        if appendS:
-                            self.PiecesOnBoard.append(s)
-                        # self.boardReplace(str(s), p.ID, y[0], y[1], i[0], i[1])
-            # print(playValue)
-            # print(bestValue)
-            # print(bestPlay)
-            if bestValue < -500.0:
-                self.winningTeam = et
+                        if playValue > bestValue:
+                            bestValue = playValue
+                            bestPlay[0] = p
+                            bestPlay[1] = i[0]
+                            bestPlay[2] = i[1]
+                            bestPlay[3] = playValue
         return bestPlay
 
     def GLadOSX(self, team):
@@ -361,12 +326,12 @@ class Board:
             # self.responseMovesDatabase.clear()
             # self.movePerformedByEnemy.clear()
         # else:
-        bestPlay = self.bigBrainTime(t, 2)
+        bestPlay = self.bigBrainTime(t, 4)
         p = bestPlay[0]
-        cr = bestPlay[1]
-        cc = bestPlay[2]
-        nr = bestPlay[3]
-        nc = bestPlay[4]
+        cr = p.r
+        cc = p.c
+        nr = bestPlay[1]
+        nc = bestPlay[2]
         if p.type == "p":
             self.movePiece(p, nr, nc)
             if p.promotionRow == nr:
@@ -381,7 +346,6 @@ class Board:
                     self.movePiece(self.getPiece(cr, cc + 3, t), nr, nc + 1)
             else:
                 self.movePiece(p, nr, nc)
-
         else:
             self.movePiece(p, nr, nc)
 

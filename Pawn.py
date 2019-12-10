@@ -21,8 +21,10 @@ class Pawn(Piece):
         for p in piecesList:
             pwp.append([p.r, p.c])
             if p.r == nr and p.c == nc:
+                if p.team == self.team:
+                    return False
                 npp = p
-            if p.r == self.r and p.c == nc:
+            if p.r == self.r and p.c == nc and p.team != self.team:
                 pp = p
         if nr == self.r and nc == self.c:
             return False
