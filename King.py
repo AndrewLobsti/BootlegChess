@@ -28,7 +28,7 @@ class King(Piece):
             if int((abs(nc - cc) + (nc - cc)) / 2) != 0:
                 rookColumn = 7
                 scanStart = cc + 1
-                scanEnd = 8
+                scanEnd = 7
             else:
                 rookColumn = 0
                 scanStart = 1
