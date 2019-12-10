@@ -20,9 +20,6 @@ class Board:
         self.teamInCheck = 2
         self.winningTeam = 2
         self.Castled = False
-        self.enemyMovesDatabase = []
-        self.responseMovesDatabase = []
-        self.movePerformedByEnemy = []
 
     def boardConstructor(self):
         self.board.clear()
@@ -127,11 +124,11 @@ class Board:
             if p.neverMoved:
                 rsr = 3
             if p.ds == 1:
-                sr[0] = p.r
+                sr[0] = p.r + 1
                 sr[1] = p.r + rsr
             else:
                 sr[0] = p.r - rsr + 1
-                sr[1] = p.r + 1
+                sr[1] = p.r
         elif p.type == "h":
             sr[0] = p.r - 2
             sr[1] = p.r + 3
@@ -140,8 +137,8 @@ class Board:
         elif p.type == "k":
             sr[0] = p.r - 1
             sr[1] = p.r + 2
-            sr[2] = p.c - 1
-            sr[3] = p.c + 2
+            sr[2] = p.c - 2
+            sr[3] = p.c + 3
         for i in range(0, len(sr)):
             if sr[i] < 0:
                 sr[i] = 0
@@ -160,12 +157,19 @@ class Board:
                         if abs(p.c - c) > 1:
                             if not self.castlingCheck(p, team):
                                 append = False
+                    ep = self.getPiece(r, c, team + 1 - 2 * team)
+                    appendEnemy = "X"
                     pr = p.r
                     pc = p.c
                     p.r = r
                     p.c = c
+                    if ep != 1:
+                        appendEnemy = "O"
+                        self.PiecesOnBoard.remove(ep)
                     if self.kingInCheck(team + 1 - 2 * team, False):
                         append = False
+                    if appendEnemy != "X":
+                        self.PiecesOnBoard.append(ep)
                     p.r = pr
                     p.c = pc
                     if append:
@@ -295,7 +299,7 @@ class Board:
                             ep = self.getPiece(ei[0], ei[1], et)
                             if ei[0] != i[0] or ei[1] != i[1]:
                                 if fprange.count([ei[0], ei[1]]) > 0:
-                                    playValue += ep.value * 0.1
+                                    playValue += ep.value * 0.01
                             else:
                                 toRemove = ep
                                 playValue += ep.value
@@ -326,7 +330,7 @@ class Board:
             # self.responseMovesDatabase.clear()
             # self.movePerformedByEnemy.clear()
         # else:
-        bestPlay = self.bigBrainTime(t, 4)
+        bestPlay = self.bigBrainTime(t, 2)
         p = bestPlay[0]
         cr = p.r
         cc = p.c
@@ -343,7 +347,8 @@ class Board:
                 if nc - cc < 0:
                     self.movePiece(self.getPiece(cr, cc - 4, t), nr, nc + 1)
                 else:
-                    self.movePiece(self.getPiece(cr, cc + 3, t), nr, nc + 1)
+                    self.movePiece(self.getPiece(cr, cc + 3, t), nr, nc - 1)
+                self.movePiece(p, nr, nc)
             else:
                 self.movePiece(p, nr, nc)
         else:
@@ -372,7 +377,7 @@ class Board:
                 if self.availablePicks(team).count(cp) > 0:
                     p = self.getPiece(r, c, team)
                     inRange = self.inRange(p, team)
-                    print("you selected the " + str(p) + " in row " + str(r) + " and column" + str(c))
+                    print("you selected the " + str(p) + " in row " + str(r + 1) + " and column" + str(c + 1))
                     print(
                         "please input the row and column where the position you want to move it to is located. If you dont want to move this piece, input 0 and 0")
                     nr = int(input()) - 1
@@ -383,7 +388,6 @@ class Board:
                             if p.promotionRow == nr:
                                 print("Your pawn reached the promotion row, as such you must now promote it! type the symbol of a piece of your choice (except pawns or kings) to replace the pawn with it")
                                 self.movePiece(p, nr, nc)
-                                self.movePerformedByEnemy.append(np)
                                 self.promotePawn(nr, nc, team, 0)
                                 break
                         if p.type == "k":
@@ -391,9 +395,8 @@ class Board:
                                 if nc - c < 0:
                                     self.movePiece(self.getPiece(r, c - 4, team), nr, nc + 1)
                                 else:
-                                    self.movePiece(self.getPiece(r, c + 3, team), nr, nc + 1)
+                                    self.movePiece(self.getPiece(r, c + 3, team), nr, nc - 1)
                         self.movePiece(p, nr, nc)
-                        self.movePerformedByEnemy.append(np)
                         break
                     else:
                         print("error: that was not a position your piece could move to!")
@@ -549,7 +552,6 @@ class Board:
                         "Dr Eggman is the Lowercase pieces player, please wait for his eggxcelency to input his move!")
                     startTime = time.perf_counter()
                     self.GLadOSX(team)
-                    self.movePerformedByEnemy.clear()
                     print(time.perf_counter() - startTime)
                     self.displayBoard()
                 if team == 1:
@@ -561,7 +563,6 @@ class Board:
                         "Dr Eggman is the Uppercase pieces player, please wait for his eggxcelency to input his move!")
                     startTime = time.perf_counter()
                     self.GLadOSX(team)
-                    self.movePerformedByEnemy.clear()
                     print(time.perf_counter() - startTime)
                     self.displayBoard()
             print("team " + str(self.winningTeam) + " won the match!")

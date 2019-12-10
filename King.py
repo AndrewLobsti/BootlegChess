@@ -31,7 +31,7 @@ class King(Piece):
                 scanEnd = 8
             else:
                 rookColumn = 0
-                scanStart = 2
+                scanStart = 1
                 scanEnd = cc
             friendlyRookInCastlingPosition = False
             for p in piecesOnBoard:
