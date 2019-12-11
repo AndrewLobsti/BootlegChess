@@ -229,37 +229,32 @@ class Board:
             elif AI == 2:
                 self.PiecesOnBoard.remove(self.getPiece(r, c, team))
                 pp = Queen.Queen("q", team, r, c)
-                self.board[r].pop(c)
-                self.board[r].insert(c, pp.ID)
+                self.board[r][c] = pp.ID
                 self.PiecesOnBoard.append(pp)
                 break
             self.board[r].pop(c)
             if p == "q":
                 self.PiecesOnBoard.remove(self.getPiece(r, c, team))
                 pp = Queen.Queen("q", team, r, c)
-                self.board[r].pop(c)
-                self.board[r].insert(c, pp.ID)
+                self.board[r][c] = pp.ID
                 self.PiecesOnBoard.append(pp)
                 break
             elif p == "h":
                 self.PiecesOnBoard.remove(self.getPiece(r, c, team))
                 pp = Knight.Knight("h", team, r, c)
-                self.board[r].pop(c)
-                self.board[r].insert(c, pp.ID)
+                self.board[r][c] = pp.ID
                 self.PiecesOnBoard.append(pp)
                 break
             elif p == "r":
                 self.PiecesOnBoard.remove(self.getPiece(r, c, team))
                 pp = Rook.Rook("r", team, r, c)
-                self.board[r].pop(c)
-                self.board[r].insert(c, pp.ID)
+                self.board[r][c] = pp.ID
                 self.PiecesOnBoard.append(pp)
                 break
             elif p == "b":
                 self.PiecesOnBoard.remove(self.getPiece(r, c, team))
                 pp = Bishop.Bishop("b", team, r, c)
-                self.board[r].pop(c)
-                self.board[r].insert(c, pp.ID)
+                self.board[r][c] = pp.ID
                 self.PiecesOnBoard.append(pp)
                 break
 
@@ -323,14 +318,14 @@ class Board:
     def GLadOSX(self, team):
         t = team + 1 - 2 * team
         self.Castled = False
-        # cProfile.runctx('self.bigBrainTime(t, 2)', globals(), locals())
+        # cProfile.runctx('self.bigBrainTime(t, 4)', globals(), locals())
         # if len(self.responseMovesDatabase) > 0:
             # i = self.enemyMovesDatabase.index(self.movePerformedByEnemy[0])
             # bestPlay = self.responseMovesDatabase[i]
             # self.responseMovesDatabase.clear()
             # self.movePerformedByEnemy.clear()
         # else:
-        bestPlay = self.bigBrainTime(t, 2)
+        bestPlay = self.bigBrainTime(t, 3)
         p = bestPlay[0]
         cr = p.r
         cc = p.c
