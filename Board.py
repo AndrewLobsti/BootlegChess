@@ -307,12 +307,13 @@ class Board:
                         pc = p.c
                         p.r = i[0]
                         p.c = i[1]
-                        fprange = self.inRange(p, team)
+                        # fprange = self.inRange(p, team)
                         for ei in apE:
                             ep = self.getPiece(ei[0], ei[1], et)
                             if ei[0] != i[0] or ei[1] != i[1]:
-                                if fprange.count([ei[0], ei[1]]) > 0:
-                                    playValue += ep.value * 0.025
+                                pass
+                                # if fprange.count([ei[0], ei[1]]) > 0:
+                                    # playValue += ep.value * 0.025
                             else:
                                 toRemove = ep
                                 playValue += ep.value
@@ -344,7 +345,7 @@ class Board:
             # self.responseMovesDatabase.clear()
             # self.movePerformedByEnemy.clear()
         # else:
-        bestPlay = self.bigBrainTime(t, 3)
+        bestPlay = self.bigBrainTime(t, 4)
         p = bestPlay[0]
         cr = p.r
         cc = p.c
