@@ -270,7 +270,7 @@ class Board:
 
     def bigBrainTime(self, team, IQ):
         bestPlay = ["X", 0, 0, 0.0, 0]
-        bestValue = -2000.0
+        bestValue = -100000.0
         fpcv = 0.0
         epcv = 0.0
         if IQ > 0:
@@ -317,7 +317,7 @@ class Board:
                             else:
                                 toRemove = ep
                                 playValue += ep.value
-                        if playValue > bestValue and IQ - 1 > 0:
+                        if playValue >= bestValue and IQ - 1 > 0:
                             if toRemove != "X":
                                 self.PiecesOnBoard.remove(toRemove)
                             eBestResponsePlay = self.bigBrainTime(et, IQ - 1)
