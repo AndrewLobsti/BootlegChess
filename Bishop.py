@@ -4,7 +4,7 @@ from Piece import Piece
 class Bishop(Piece):
 
     def __init__(self, ID, team, r, c):
-        super().__init__(ID, team, 3.0)
+        super().__init__(ID, team, 3.25)
         self.r = r
         self.c = c
 

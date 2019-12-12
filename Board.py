@@ -189,6 +189,8 @@ class Board:
         cc = p.c
         p.neverMoved = False
         p.moves += 1
+        if p.type == "p":
+            p.value += (9.0 / ((abs(cr - p.promotionRow) - (abs(nr - cr) - 1)) ** 2)) + ((abs(nr - cr) - 1) * (9.0 / abs(cr - p.promotionRow) ** 2))
         if np != 1:
             # print(str(cp) + " just ate " + str(np) + " !")
             self.shadowRealm.append(np)
@@ -268,33 +270,49 @@ class Board:
 
     def bigBrainTime(self, team, IQ):
         bestPlay = ["X", 0, 0, 0.0, 0]
-        playValue = 0.0
         bestValue = -2000.0
+        fpcv = 0.0
+        epcv = 0.0
         if IQ > 0:
             et = team + 1 - 2 * team
             a = self.availablePicks(team)
+            apE = self.availablePicks(et)
+            for fpc in a:
+                fp = self.getPiece(fpc[0], fpc[1], team)
+                if fp != 1:
+                    fpcv += fp.value
+            for epc in apE:
+                ep = self.getPiece(epc[0], epc[1], et)
+                if ep != 1:
+                    epcv += ep.value
+            relativeValue = epcv / fpcv
             for y in a:
-                playValue = 0.0
                 p = self.getPiece(y[0], y[1], team)
                 if p != 1:
                     m = self.inRange(p, team)
+                    p.value = p.value * relativeValue
                 else:
                     m = []
                 if len(m) > 0:
                     for i in m:
-                        toRemove = "X"
                         playValue = 0.0
+                        resetPieceValue = 0.0
+                        if p.type == "p":
+                            prv = (9.0 / ((abs(y[0] - p.promotionRow) - (abs(i[0] - y[0]) - 1)) ** 2)) + ((abs(i[0] - y[0]) - 1) * (9.0 / abs(y[0] - p.promotionRow) ** 2))
+                            p.value += prv
+                            resetPieceValue = prv
+                            playValue += prv
+                        toRemove = "X"
                         pr = p.r
                         pc = p.c
                         p.r = i[0]
                         p.c = i[1]
                         fprange = self.inRange(p, team)
-                        apE = self.availablePicks(et)
                         for ei in apE:
                             ep = self.getPiece(ei[0], ei[1], et)
                             if ei[0] != i[0] or ei[1] != i[1]:
                                 if fprange.count([ei[0], ei[1]]) > 0:
-                                    playValue += ep.value * 0.01
+                                    playValue += ep.value * 0.025
                             else:
                                 toRemove = ep
                                 playValue += ep.value
@@ -307,6 +325,7 @@ class Board:
                             playValue -= eBestResponsePlay[3]
                         p.r = pr
                         p.c = pc
+                        p.value -= resetPieceValue
                         if playValue > bestValue:
                             bestValue = playValue
                             bestPlay[0] = p
@@ -331,6 +350,7 @@ class Board:
         cc = p.c
         nr = bestPlay[1]
         nc = bestPlay[2]
+        print(bestPlay[3])
         if p.type == "p":
             self.movePiece(p, nr, nc)
             if p.promotionRow == nr:
