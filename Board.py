@@ -302,16 +302,15 @@ class Board:
                             p.value += prv
                             resetPieceValue = prv
                             playValue += prv
-                        toRemove = "X"
                         pr = p.r
                         pc = p.c
                         p.r = i[0]
                         p.c = i[1]
-                        for ei in apE:
-                            ep = self.getPiece(ei[0], ei[1], et)
-                            if ei[0] == i[0] and ei[1] == i[1]:
-                                toRemove = ep
-                                playValue += ep.value
+                        toRemove = "X"
+                        ep = self.getPiece(i[0], i[1], et)
+                        if ep != 1:
+                            toRemove = ep
+                            playValue += ep.value
                         if playValue >= bestValue and IQ - 1 > 0:
                             if toRemove != "X":
                                 self.PiecesOnBoard.remove(toRemove)
