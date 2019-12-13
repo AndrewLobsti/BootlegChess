@@ -270,7 +270,7 @@ class Board:
 
     def bigBrainTime(self, team, IQ):
         bestPlay = ["X", 0, 0, 0.0, 0]
-        bestValue = -100000.0
+        bestValue = -100000000.0
         fpcv = 0.0
         epcv = 0.0
         if IQ > 0:
@@ -307,14 +307,9 @@ class Board:
                         pc = p.c
                         p.r = i[0]
                         p.c = i[1]
-                        # fprange = self.inRange(p, team)
                         for ei in apE:
                             ep = self.getPiece(ei[0], ei[1], et)
-                            if ei[0] != i[0] or ei[1] != i[1]:
-                                pass
-                                # if fprange.count([ei[0], ei[1]]) > 0:
-                                    # playValue += ep.value * 0.025
-                            else:
+                            if ei[0] == i[0] and ei[1] == i[1]:
                                 toRemove = ep
                                 playValue += ep.value
                         if playValue >= bestValue and IQ - 1 > 0:
@@ -346,29 +341,32 @@ class Board:
             # self.movePerformedByEnemy.clear()
         # else:
         bestPlay = self.bigBrainTime(t, 4)
-        p = bestPlay[0]
-        cr = p.r
-        cc = p.c
-        nr = bestPlay[1]
-        nc = bestPlay[2]
-        print(bestPlay[3])
-        if p.type == "p":
-            self.movePiece(p, nr, nc)
-            if p.promotionRow == nr:
-                self.promotePawn(nr, nc, t, 2)
-        elif p.type == "k":
-            if abs(nc - p.c) > 1:
-                print("Castling!")
-                self.Castled = True
-                if nc - cc < 0:
-                    self.movePiece(self.getPiece(cr, cc - 4, t), nr, nc + 1)
-                else:
-                    self.movePiece(self.getPiece(cr, cc + 3, t), nr, nc - 1)
+        if bestPlay[3] > -100000000.0:
+            p = bestPlay[0]
+            cr = p.r
+            cc = p.c
+            nr = bestPlay[1]
+            nc = bestPlay[2]
+            print(bestPlay[3])
+            if p.type == "p":
                 self.movePiece(p, nr, nc)
+                if p.promotionRow == nr:
+                    self.promotePawn(nr, nc, t, 2)
+            elif p.type == "k":
+                if abs(nc - p.c) > 1:
+                    print("Castling!")
+                    self.Castled = True
+                    if nc - cc < 0:
+                        self.movePiece(self.getPiece(cr, cc - 4, t), nr, nc + 1)
+                    else:
+                        self.movePiece(self.getPiece(cr, cc + 3, t), nr, nc - 1)
+                    self.movePiece(p, nr, nc)
+                else:
+                    self.movePiece(p, nr, nc)
             else:
                 self.movePiece(p, nr, nc)
         else:
-            self.movePiece(p, nr, nc)
+            self.winningTeam = team
 
     def Wheatley(self, team):
         pass
