@@ -52,15 +52,13 @@ class Board:
         availablePicks = []
         for p in self.PiecesOnBoard:
             if p.team == team:
-                i = [p.r, p.c]
-                availablePicks.append(i)
+                availablePicks.append(p)
         return availablePicks
 
     def kingInCheck(self, team, future):
         k = self.getKing(team + 1 - 2 * team)
         if k != 1:
-            for i in self.availablePicks(team):
-                p = self.getPiece(i[0], i[1], team)
+            for p in self.availablePicks(team):
                 if p.validMove(self.PiecesOnBoard, k.r, k.c):
                     return True
             return False
@@ -68,28 +66,10 @@ class Board:
             return True
 
     def getKing(self, team):
-        for p in self.PiecesOnBoard:
-            if p.type == "k" and p.team == team:
+        for p in self.availablePicks(team):
+            if p.type == "k":
                 return p
         return 1
-
-    def inAttackRange(self, team):
-        positions = []
-        for i in self.availablePicks(team):
-            ap = self.getPiece(i[0], i[1], team)
-            l = self.inRange(ap, team)
-            for x in l:
-                positions.append(x)
-        return positions
-
-    def isAttackable(self, r, c, team):
-        p = [r, c]
-        for i in self.availablePicks(team):
-            ap = self.getPiece(i[0], i[1], team)
-            l = self.inRange(ap, team)
-            if l.count(p) > 0:
-                return True
-        return False
 
     def inCheckRange(self, p, r, c, team):
         nr = 0
@@ -277,17 +257,12 @@ class Board:
             et = team + 1 - 2 * team
             a = self.availablePicks(team)
             apE = self.availablePicks(et)
-            for fpc in a:
-                fp = self.getPiece(fpc[0], fpc[1], team)
-                if fp != 1:
-                    fpcv += fp.value
-            for epc in apE:
-                ep = self.getPiece(epc[0], epc[1], et)
-                if ep != 1:
-                    epcv += ep.value
+            for fp in a:
+                fpcv += fp.value
+            for ep in apE:
+                epcv += ep.value
             relativeValue = epcv / fpcv
-            for y in a:
-                p = self.getPiece(y[0], y[1], team)
+            for p in a:
                 if p != 1:
                     m = self.inRange(p, team)
                     p.value = p.value * relativeValue
@@ -298,7 +273,7 @@ class Board:
                         playValue = 0.0
                         resetPieceValue = 0.0
                         if p.type == "p":
-                            prv = (9.0 / ((abs(y[0] - p.promotionRow) - (abs(i[0] - y[0]) - 1)) ** 2)) + ((abs(i[0] - y[0]) - 1) * (9.0 / abs(y[0] - p.promotionRow) ** 2))
+                            prv = (9.0 / ((abs(p.r - p.promotionRow) - (abs(i[0] - p.r) - 1)) ** 2)) + ((abs(i[0] - p.r) - 1) * (9.0 / abs(p.r - p.promotionRow) ** 2))
                             p.value += prv
                             resetPieceValue = prv
                             playValue += prv
@@ -333,12 +308,6 @@ class Board:
         t = team + 1 - 2 * team
         self.Castled = False
         # cProfile.runctx('self.bigBrainTime(t, 4)', globals(), locals())
-        # if len(self.responseMovesDatabase) > 0:
-            # i = self.enemyMovesDatabase.index(self.movePerformedByEnemy[0])
-            # bestPlay = self.responseMovesDatabase[i]
-            # self.responseMovesDatabase.clear()
-            # self.movePerformedByEnemy.clear()
-        # else:
         bestPlay = self.bigBrainTime(t, 4)
         if bestPlay[3] > -100000000.0:
             p = bestPlay[0]
@@ -375,8 +344,7 @@ class Board:
         if team == 1:
             player = "Uppercase"
         possiblePicks = []
-        for x in self.availablePicks(team):
-            p = self.getPiece(x[0], x[1], team)
+        for p in self.availablePicks(team):
             possibleMoves = self.inRange(p, team)
             if len(possibleMoves) > 0:
                 possiblePicks.append(p)
@@ -386,9 +354,8 @@ class Board:
                     player + " pieces player, choose the row and column where the piece you wish to move is located! (both values must be >= 1 and <= 8")
                 r = int(input()) - 1
                 c = int(input()) - 1
-                cp = [r, c]
-                if self.availablePicks(team).count(cp) > 0:
-                    p = self.getPiece(r, c, team)
+                p = self.getPiece(r, c, team)
+                if p != 1:
                     inRange = self.inRange(p, team)
                     print("you selected the " + str(p) + " in row " + str(r + 1) + " and column" + str(c + 1))
                     print(
