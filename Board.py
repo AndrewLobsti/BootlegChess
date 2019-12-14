@@ -198,16 +198,16 @@ class Board:
                 canMoveTo = self.canMoveTo(p, r, p.c + s, p.team)
                 if canMoveTo is not False:
                     inRange.append(canMoveTo)
-                canMoveTo = self.canMoveTo(p, p.r, p.c - s, p.team)
+                canMoveTo = self.canMoveTo(p, r, p.c - s, p.team)
                 if canMoveTo is not False:
                     inRange.append(canMoveTo)
                 s += 1
-            s = 7
-            for r in range(0, p.r - 1):
+            s = p.r
+            for r in range(0, p.r):
                 canMoveTo = self.canMoveTo(p, r, p.c + s, p.team)
                 if canMoveTo is not False:
                     inRange.append(canMoveTo)
-                canMoveTo = self.canMoveTo(p, p.r, p.c - s, p.team)
+                canMoveTo = self.canMoveTo(p, r, p.c - s, p.team)
                 if canMoveTo is not False:
                     inRange.append(canMoveTo)
                 s -= 1
@@ -229,7 +229,7 @@ class Board:
                 if canMoveTo is not False:
                     inRange.append(canMoveTo)
                 s += 1
-            s = 7
+            s = p.r
             for r in range(0, p.r):
                 canMoveTo = self.canMoveTo(p, r, p.c + s, p.team)
                 if canMoveTo is not False:
@@ -362,7 +362,7 @@ class Board:
             move = str(p) + ", " + str(y[0]) + ", " + str(y[1]) + ", " + str(np[0]) + ", " + str(np[1])
             self.team1Moves.append(move)
 
-    def bigBrainTime(self, team, IQ):
+    def bigBrainTime(self, team, IQ, ebplayValue):
         bestPlay = ["X", 0, 0, 0.0, 0]
         bestValue = -100000000.0
         fpcv = 0.0
@@ -400,13 +400,17 @@ class Board:
                         if ep != 1:
                             toRemove = ep
                             playValue += ep.value
-                        if playValue >= bestValue and IQ - 1 > 0:
+                        if IQ - 1 > 0:
                             if toRemove != "X":
                                 self.PiecesOnBoard.remove(toRemove)
-                            eBestResponsePlay = self.bigBrainTime(et, IQ - 1)
+                            eBestResponsePlay = self.bigBrainTime(et, IQ - 1, bestValue)
                             if toRemove != "X":
                                 self.PiecesOnBoard.append(toRemove)
                             playValue -= eBestResponsePlay[3]
+                            if playValue >= -ebplayValue:
+                                p.r = pr
+                                p.c = pc
+                                return [p, 0, 0, playValue]
                         p.r = pr
                         p.c = pc
                         p.value -= resetPieceValue
@@ -421,8 +425,8 @@ class Board:
     def GLadOSX(self, team):
         t = team + 1 - 2 * team
         self.Castled = False
-        # cProfile.runctx('self.bigBrainTime(t, 4)', globals(), locals())
-        bestPlay = self.bigBrainTime(t, 5)
+        # cProfile.runctx('self.bigBrainTime(t, 4, -100000000.0)', globals(), locals())
+        bestPlay = self.bigBrainTime(t, 4, -100000000.0)
         if bestPlay[3] > -100000000.0:
             p = bestPlay[0]
             cr = p.r
