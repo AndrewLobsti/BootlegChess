@@ -407,10 +407,10 @@ class Board:
                             if toRemove != "X":
                                 self.PiecesOnBoard.append(toRemove)
                             playValue -= eBestResponsePlay[3]
-                            if playValue >= -ebplayValue:
-                                p.r = pr
-                                p.c = pc
-                                return [p, 0, 0, playValue]
+                        if playValue >= -ebplayValue:
+                            p.r = pr
+                            p.c = pc
+                            return [p, 0, 0, playValue]
                         p.r = pr
                         p.c = pc
                         p.value -= resetPieceValue
