@@ -21,6 +21,7 @@ class Board:
         self.winningTeam = 2
         self.Castled = False
         self.IQ = 3
+        self.npositionsExamined = 0
 
     def boardConstructor(self):
         self.board.clear()
@@ -161,6 +162,7 @@ class Board:
         sr = self.scanRange(p)
         for r in range(sr[0], sr[1]):
             for c in range(sr[2], sr[3]):
+                self.npositionsExamined += 1
                 if p.validMove(self.PiecesOnBoard, r, c):
                     append = True
                     if p.type == "k":
@@ -302,8 +304,8 @@ class Board:
                     for i in m:
                         playValue = 0.0
                         resetPieceValue = 0.0
-                        if p.type == "p":
-                            prv = 9.0 - 1.25 * abs(i[0] - p.promotionRow)
+                        if p.type == "p" and abs(i[0] - p.promotionRow) < 3:
+                            prv = 9.0 - 3 * abs(i[0] - p.promotionRow)
                             p.value += prv
                             resetPieceValue = prv
                             playValue += prv
@@ -343,12 +345,15 @@ class Board:
                             bestPlay[3] = playValue
         return bestPlay
 
-    def GLadOSX(self, team):
+    def GLadOSX(self, team, startTime):
         t = team + 1 - 2 * team
         self.Castled = False
         # cProfile.runctx('self.bigBrainTime(t, 4, -100000000.0)', globals(), locals())
+        self.npositionsExamined = 0
         bestPlay = self.bigBrainTime(t, self.IQ, -100000000.0)
-        if bestPlay[3] > -100000000.0:
+        timeTaken = time.perf_counter() - startTime
+        print("number of positions examined per second: " + str(self.npositionsExamined / timeTaken) + " time taken:" + str(timeTaken) + " number of positions examined:" + str(self.npositionsExamined))
+        if bestPlay[0] != "X":
             p = bestPlay[0]
             cr = p.r
             cc = p.c
@@ -570,7 +575,7 @@ class Board:
                     print(
                         "Dr Eggman is the Lowercase pieces player, please wait for his eggxcelency to input his move!")
                     startTime = time.perf_counter()
-                    self.GLadOSX(team)
+                    self.GLadOSX(team, startTime)
                     print(time.perf_counter() - startTime)
                     self.displayBoard()
                 if team == 1:
@@ -581,7 +586,7 @@ class Board:
                     print(
                         "Dr Eggman is the Uppercase pieces player, please wait for his eggxcelency to input his move!")
                     startTime = time.perf_counter()
-                    self.GLadOSX(team)
+                    self.GLadOSX(team, startTime)
                     print(time.perf_counter() - startTime)
                     self.displayBoard()
             print("team " + str(self.winningTeam) + " won the match!")
