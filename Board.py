@@ -20,6 +20,7 @@ class Board:
         self.teamInCheck = 2
         self.winningTeam = 2
         self.Castled = False
+        self.IQ = 3
 
     def boardConstructor(self):
         self.board.clear()
@@ -154,91 +155,6 @@ class Board:
             return [r, c]
         else:
             return False
-
-    def inRangeX(self, p):
-        inRange = []
-        if p.type == "p":
-            if p.neverMoved:
-                canMoveTo = self.canMoveTo(p, p.r - 2 + p.ds * 4, p.c, p.team)
-                if canMoveTo is not False:
-                    inRange.append(canMoveTo)
-            canMoveTo = self.canMoveTo(p, p.r - 1 + p.ds * 2, p.c + 1, p.team)
-            if canMoveTo is not False:
-                inRange.append(canMoveTo)
-            canMoveTo = self.canMoveTo(p, p.r - 1 + p.ds * 2, p.c - 1, p.team)
-            if canMoveTo is not False:
-                inRange.append(canMoveTo)
-            canMoveTo = self.canMoveTo(p, p.r - 1 + p.ds * 2, p.c + 1, p.team)
-            if canMoveTo is not False:
-                inRange.append(canMoveTo)
-        elif p.type == "k":
-            for r in range(p.r - 1, p.r + 2):
-                for c in range(p.c - 1, p.c + 2):
-                    canMoveTo = self.canMoveTo(p, r, c, p.team)
-                    if canMoveTo is not False:
-                        inRange.append(canMoveTo)
-        elif p.type == "h":
-            for r in range(p.r - 2, p.r + 3):
-                for c in range(p.c - 2, p.c + 3):
-                    canMoveTo = self.canMoveTo(p, r, c, p.team)
-                    if canMoveTo is not False:
-                        inRange.append(canMoveTo)
-        elif p.type == "r":
-            for r in range(0, 8):
-                canMoveTo = self.canMoveTo(p, r, p.c, p.team)
-                if canMoveTo is not False:
-                    inRange.append(canMoveTo)
-            for c in range(0, 8):
-                canMoveTo = self.canMoveTo(p, p.r, c, p.team)
-                if canMoveTo is not False:
-                    inRange.append(canMoveTo)
-        elif p.type == "b":
-            s = 1
-            for r in range(p.r + 1, 8):
-                canMoveTo = self.canMoveTo(p, r, p.c + s, p.team)
-                if canMoveTo is not False:
-                    inRange.append(canMoveTo)
-                canMoveTo = self.canMoveTo(p, r, p.c - s, p.team)
-                if canMoveTo is not False:
-                    inRange.append(canMoveTo)
-                s += 1
-            s = p.r
-            for r in range(0, p.r):
-                canMoveTo = self.canMoveTo(p, r, p.c + s, p.team)
-                if canMoveTo is not False:
-                    inRange.append(canMoveTo)
-                canMoveTo = self.canMoveTo(p, r, p.c - s, p.team)
-                if canMoveTo is not False:
-                    inRange.append(canMoveTo)
-                s -= 1
-        elif p.type == "q":
-            for r in range(0, 8):
-                canMoveTo = self.canMoveTo(p, r, p.c, p.team)
-                if canMoveTo is not False:
-                    inRange.append(canMoveTo)
-            for c in range(0, 8):
-                canMoveTo = self.canMoveTo(p, p.r, c, p.team)
-                if canMoveTo is not False:
-                    inRange.append(canMoveTo)
-            s = 1
-            for r in range(p.r + 1, 8):
-                canMoveTo = self.canMoveTo(p, r, p.c + s, p.team)
-                if canMoveTo is not False:
-                    inRange.append(canMoveTo)
-                canMoveTo = self.canMoveTo(p, r, p.c - s, p.team)
-                if canMoveTo is not False:
-                    inRange.append(canMoveTo)
-                s += 1
-            s = p.r
-            for r in range(0, p.r):
-                canMoveTo = self.canMoveTo(p, r, p.c + s, p.team)
-                if canMoveTo is not False:
-                    inRange.append(canMoveTo)
-                canMoveTo = self.canMoveTo(p, r, p.c - s, p.team)
-                if canMoveTo is not False:
-                    inRange.append(canMoveTo)
-                s -= 1
-        return inRange
 
     def inRange(self, p, team):
         inRange = []
@@ -378,7 +294,7 @@ class Board:
             relativeValue = epcv / fpcv
             for p in a:
                 if p != 1:
-                    m = self.inRangeX(p)
+                    m = self.inRange(p, team)
                     p.value = p.value * relativeValue
                 else:
                     m = []
@@ -387,7 +303,7 @@ class Board:
                         playValue = 0.0
                         resetPieceValue = 0.0
                         if p.type == "p":
-                            prv = (9.0 / ((abs(p.r - p.promotionRow) - (abs(i[0] - p.r) - 1)) ** 2)) + ((abs(i[0] - p.r) - 1) * (9.0 / abs(p.r - p.promotionRow) ** 2))
+                            prv = 9.0 - 1.25 * abs(i[0] - p.promotionRow)
                             p.value += prv
                             resetPieceValue = prv
                             playValue += prv
@@ -400,6 +316,11 @@ class Board:
                         if ep != 1:
                             toRemove = ep
                             playValue += ep.value
+                        if(playValue < bestValue):
+                            p.r = pr
+                            p.c = pc
+                            p.value -= resetPieceValue
+                            continue
                         if IQ - 1 > 0:
                             if toRemove != "X":
                                 self.PiecesOnBoard.remove(toRemove)
@@ -426,7 +347,7 @@ class Board:
         t = team + 1 - 2 * team
         self.Castled = False
         # cProfile.runctx('self.bigBrainTime(t, 4, -100000000.0)', globals(), locals())
-        bestPlay = self.bigBrainTime(t, 4, -100000000.0)
+        bestPlay = self.bigBrainTime(t, self.IQ, -100000000.0)
         if bestPlay[3] > -100000000.0:
             p = bestPlay[0]
             cr = p.r
@@ -463,7 +384,7 @@ class Board:
             player = "Uppercase"
         possiblePicks = []
         for p in self.availablePicks(team):
-            possibleMoves = self.inRangeX(p)
+            possibleMoves = self.inRange(p, team)
             if len(possibleMoves) > 0:
                 possiblePicks.append(p)
         if len(possiblePicks) > 0:
@@ -474,7 +395,7 @@ class Board:
                 c = int(input()) - 1
                 p = self.getPiece(r, c, team)
                 if p != 1:
-                    inRange = self.inRangeX(p)
+                    inRange = self.inRange(p, team)
                     print("you selected the " + str(p) + " in row " + str(r + 1) + " and column" + str(c + 1))
                     print(
                         "please input the row and column where the position you want to move it to is located. If you dont want to move this piece, input 0 and 0")
